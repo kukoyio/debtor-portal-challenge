@@ -1,59 +1,59 @@
 import { supabaseServer } from '@/lib/supabase/server';
-import { 
-  AccountContext, 
-  AccountHolder, 
-  RelatedPerson, 
-  PromiseToPay, 
-  Transaction, 
-  CallAppointment,
-  ContactMethod
+import {
+    AccountContext,
+    AccountHolder,
+    RelatedPerson,
+    PromiseToPay,
+    Transaction,
+    CallAppointment,
+    ContactMethod
 } from './types';
 import { validateAddress, validateEmail, validateName, validatePhone } from './validators';
 
 // Converts a raw Supabase row (snake_case columns) into the app's AccountHolder shape (camelCase).
 function mapAccountHolderRow(account: any): AccountHolder {
-  return {
-    accountId: account.account_id,
-    accountHolderFirstName: account.first_name,
-    accountHolderLastName: account.last_name,
-    email: account.email,
-    phone: account.phone,
-    address: {
-      line1: account.address_line1,
-      line2: account.address_line2 ?? undefined,
-      city: account.city,
-      postalCode: account.postal_code,
-      country: account.country,
-    },
-    preferredContactMethod: account.preferred_contact_method as ContactMethod,
-    reference: account.reference,
-    creditorName: account.creditor_name,
-    currency: account.currency,
-    balanceCents: account.balance_cents,
-    status: account.status,
-    daysPastDue: account.days_past_due,
-    minimumPaymentCents: account.minimum_payment_cents,
-    lastPaymentDate: account.last_payment_date,
-    lastPaymentAmountCents: account.last_payment_amount_cents,
-  };
+    return {
+        accountId: account.account_id,
+        accountHolderFirstName: account.first_name,
+        accountHolderLastName: account.last_name,
+        email: account.email,
+        phone: account.phone,
+        address: {
+            line1: account.address_line1,
+            line2: account.address_line2 ?? undefined,
+            city: account.city,
+            postalCode: account.postal_code,
+            country: account.country,
+        },
+        preferredContactMethod: account.preferred_contact_method as ContactMethod,
+        reference: account.reference,
+        creditorName: account.creditor_name,
+        currency: account.currency,
+        balanceCents: account.balance_cents,
+        status: account.status,
+        daysPastDue: account.days_past_due,
+        minimumPaymentCents: account.minimum_payment_cents,
+        lastPaymentDate: account.last_payment_date,
+        lastPaymentAmountCents: account.last_payment_amount_cents,
+    };
 }
 
 // Single query pulls the account plus every related table 
 export async function getAccount(accountId: string): Promise<AccountContext> {
-  // Fetch data 
+    // Fetch data 
     const { data: account, error } = await supabaseServer
-    .from('account_holders')
-    .select(`
+        .from('account_holders')
+        .select(`
       *,
       related_people (*),
       promises_to_pay (*),
       transactions (*),
       call_appointments (*)
     `)
-    .eq('account_id', accountId) 
-    .single();
+        .eq('account_id', accountId)
+        .single();
 
-        
+
     if (error || !account)
         throw new Error(`Account with identifier ${accountId} could not be found.`);
 
@@ -103,44 +103,44 @@ export async function getAccount(accountId: string): Promise<AccountContext> {
         promisesToPay: mappedPromisesToPay,
         transactions: mappedTransactions,
         callAppointments: mappedCallAppointments,
-        
+
         // billing_due_date / support_phone / support_email / last_statement_amount_cents
         // were added to the schema, not in the starter migration. See ADR-008.
         billing: {
-        currentAmountCents: account.balance_cents,
-        lastStatementAmountCents: account.last_statement_amount_cents,
-        dueDate: account.billing_due_date, 
+            currentAmountCents: account.balance_cents,
+            lastStatementAmountCents: account.last_statement_amount_cents,
+            dueDate: account.billing_due_date,
         },
         paymentOptions: {
-        payNowEnabled: true,
-        promiseToPayEnabled: true,
-        mockPaymentsEnabled: true,
-        arrangementEnabled: false,
-        eligibleArrangementOptions: [],
+            payNowEnabled: true,
+            promiseToPayEnabled: true,
+            mockPaymentsEnabled: true,
+            arrangementEnabled: false,
+            eligibleArrangementOptions: [],
         },
         support: {
-        humanSupportAvailable: true,
-        supportPhone: account.support_phone,
-        supportEmail: account.support_email,
+            humanSupportAvailable: true,
+            supportPhone: account.support_phone,
+            supportEmail: account.support_email,
         },
         notificationRules: {
-        sendEmailOnDataChange: true,
-        pdfPasswordSource: "account_phone_last4",
+            sendEmailOnDataChange: true,
+            pdfPasswordSource: "account_phone_last4",
         },
     };
 }
 
 // Partial update: only fields present in `fields` are validated and written.
 // Untouched fields are left alone in the database
-export async function updateAccountHolder(accountId: string, fields: Partial<{firstName: string, lastName: string, email: string, phone: string, address: Partial<AccountHolder['address']>}>): Promise<AccountHolder> {
+export async function updateAccountHolder(accountId: string, fields: Partial<{ firstName: string, lastName: string, email: string, phone: string, address: Partial<AccountHolder['address']> }>): Promise<AccountHolder> {
     const updatePayload: Record<string, any> = {};
 
-    if (fields.firstName !== undefined){
+    if (fields.firstName !== undefined) {
         if (!validateName(fields.firstName)) throw new Error("First name cannot be empty.");
         updatePayload.first_name = fields.firstName.trim();
     }
 
-    if (fields.lastName !== undefined){
+    if (fields.lastName !== undefined) {
         if (!validateName(fields.lastName)) throw new Error("Last name cannot be empty.");
         updatePayload.last_name = fields.lastName.trim();
     }
@@ -150,8 +150,8 @@ export async function updateAccountHolder(accountId: string, fields: Partial<{fi
         updatePayload.email = fields.email.trim();
     }
 
-    if(fields.phone !== undefined){
-        if(!validatePhone(fields.phone)) throw new Error("Phone must start with '+' followed by 10 to 15 digits.");
+    if (fields.phone !== undefined) {
+        if (!validatePhone(fields.phone)) throw new Error("Phone must start with '+' followed by 10 to 15 digits.");
         updatePayload.phone = fields.phone;
     }
 
@@ -166,35 +166,35 @@ export async function updateAccountHolder(accountId: string, fields: Partial<{fi
         updatePayload.country = fields.address.country!.trim();
     }
 
-    if(Object.keys(updatePayload).length === 0){
+    if (Object.keys(updatePayload).length === 0) {
         throw new Error("No fields provided to update.");
     }
 
     const { data: updated, error } = await supabaseServer
-    .from('account_holders')
-    .update(updatePayload)
-    .eq('account_id', accountId)
-    .select()
-    .single();
+        .from('account_holders')
+        .update(updatePayload)
+        .eq('account_id', accountId)
+        .select()
+        .single();
 
-    if(error || !updated) 
+    if (error || !updated)
         throw new Error(`Failed to update account: ${error?.message || 'Account not found'}`);
 
     return mapAccountHolderRow(updated);
 }
 
 export async function updatePreferredContactMethod(accountId: string, method: ContactMethod): Promise<AccountHolder> {
-    if(!['email', 'sms', 'phone'].includes(method))
+    if (!['email', 'sms', 'phone'].includes(method))
         throw new Error("Invalid contact method. Must be 'email', 'sms', or 'phone'.");
 
     const { data: updated, error } = await supabaseServer
-    .from('account_holders')
-    .update({preferred_contact_method: method})
-    .eq('account_id', accountId)
-    .select()
-    .single();
-    
-    if(error || !updated)
+        .from('account_holders')
+        .update({ preferred_contact_method: method })
+        .eq('account_id', accountId)
+        .select()
+        .single();
+
+    if (error || !updated)
         throw new Error(`Failed to update preferred contact method: ${error?.message || 'Account not found'}`);
 
     return mapAccountHolderRow(updated);

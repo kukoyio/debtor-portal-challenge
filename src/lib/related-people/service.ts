@@ -28,14 +28,14 @@ export async function listRelatedPeople(internalAccountId: string): Promise<Rela
 }
 
 export async function addRelatedPerson(
-  internalAccountId: string,
-  payload: {
-    name: string;
-    email: string;
-    phone: string;
-    relationship?: string;
-    authorizedToAct: boolean;
-  }
+    internalAccountId: string,
+    payload: {
+        name: string;
+        email: string;
+        phone: string;
+        relationship?: string;
+        authorizedToAct: boolean;
+    }
 ): Promise<RelatedPerson> {
     if (!validateName(payload.name)) throw new Error("Name cannot be empty.");
     if (!validateEmail(payload.email)) throw new Error("Invalid email format.");
@@ -44,12 +44,12 @@ export async function addRelatedPerson(
     const { data, error } = await supabaseServer
         .from('related_people')
         .insert({
-        account_holder_id: internalAccountId,
-        name: payload.name.trim(),
-        email: payload.email.trim(),
-        phone: payload.phone,
-        relationship: payload.relationship?.trim() || null,
-        authorized_to_act: payload.authorizedToAct,
+            account_holder_id: internalAccountId,
+            name: payload.name.trim(),
+            email: payload.email.trim(),
+            phone: payload.phone,
+            relationship: payload.relationship?.trim() || null,
+            authorized_to_act: payload.authorizedToAct,
         })
         .select()
         .single();
@@ -62,15 +62,15 @@ export async function addRelatedPerson(
 }
 
 export async function updateRelatedPerson(
-  internalAccountId: string,
-  personId: string,
-  fields: Partial<{
-    name: string;
-    email: string;
-    phone: string;
-    relationship: string;
-    authorizedToAct: boolean;
-  }>
+    internalAccountId: string,
+    personId: string,
+    fields: Partial<{
+        name: string;
+        email: string;
+        phone: string;
+        relationship: string;
+        authorizedToAct: boolean;
+    }>
 ): Promise<RelatedPerson> {
     const updatePayload: Record<string, any> = {};
 
@@ -124,7 +124,7 @@ export async function removeRelatedPerson(internalAccountId: string, personId: s
     if (error) {
         throw new Error(`Failed to remove related person: ${error.message}`);
     }
-    if(!data || data.length === 0){
+    if (!data || data.length === 0) {
         throw new Error(`Related person not found on this account.`);
     }
 }

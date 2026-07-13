@@ -56,3 +56,17 @@ writing an overly strict custom regex would inevitably end up blocking legitimat
 international users. I decided the best middle ground is to just enforce a basic 
 subset of the E.164 standard using a super simple regex: ^\+[0-9]{10,15}$. Basically, 
 the number just has to start with a literal + followed by 10 to 15 digits.
+
+## ADR-010: Test mocks don't fully enforce Supabase's real query rules
+The mock Supabase client used in tests (`mockChain`) doesn't distinguish 
+between `.single()` calls (expects exactly one row) and plain awaited 
+calls (returns an array). Both just return whatever `mockDbData` is 
+currently set to, whatever shape it's in. This means a test could keep 
+passing even if the actual code path being exercised silently changed 
+(e.g. someone added `.single()` to a function that didn't have it 
+before). The tests still correctly verify behaviour under normal use, 
+but they trust the developer to set `mockDbData` in the right shape for 
+whichever chain the real code calls — they don't independently catch a 
+mismatch between the test setup and the real query shape. Accepted as a 
+reasonable trade-off for a 3-day project; a stricter mock or integration 
+tests against a real Supabase instance would close this gap.
