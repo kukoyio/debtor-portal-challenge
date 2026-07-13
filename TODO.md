@@ -62,8 +62,8 @@
 - [x] Implement `findRelatedPersonByName(accountId, name)`
 
 ### 1.6 Promises Service (`src/lib/promises/service.ts`)
-- [ ] Implement `listPromisesToPay(accountId)`
-- [ ] Implement `createPromiseToPay(accountId, data)` with future-date enforcement
+- [x] Implement `listPromisesToPay(accountId)`
+- [x] Implement `createPromiseToPay(accountId, data)` with future-date enforcement
 
 ### 1.7 Payments Service (`src/lib/payments/service.ts`)
 - [ ] Implement `listTransactions(accountId)`
