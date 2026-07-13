@@ -47,3 +47,12 @@ amount is too high and asks for a smaller one which is clearer than guessing
 what they meant.
 
 ## ADR-008: extended schema with due_date/support_phone/support_email columns, missing from starter migration but required as read-only fields per account-context.md
+
+## ADR-009: Phone Number validation strategy
+When figuring out how to handle phone number validation for the MVP, I realized 
+that defining a "valid" number globally is unnecessarily complex and would bloat 
+the app with a massive library like google-libphonenumber, but I also knew that 
+writing an overly strict custom regex would inevitably end up blocking legitimate 
+international users. I decided the best middle ground is to just enforce a basic 
+subset of the E.164 standard using a super simple regex: ^\+[0-9]{10,15}$. Basically, 
+the number just has to start with a literal + followed by 10 to 15 digits.

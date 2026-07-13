@@ -47,12 +47,12 @@
 
 ### 1.4 Account Service (`src/lib/account/service.ts`)
 - [x] Implement `getAccount(accountId)`
-- [ ] Implement `updateAccountHolder(accountId, fields)`
-- [ ] Implement `updatePreferredContactMethod(accountId, method)`
-- [ ] Add email format validation
-- [ ] Add name non-empty validation
-- [ ] Add phone format validation and write corresponding ADR
-- [ ] Add address field structural validation
+- [x] Implement `updateAccountHolder(accountId, fields)`
+- [x] Implement `updatePreferredContactMethod(accountId, method)`
+- [x] Add email format validation
+- [x] Add name non-empty validation
+- [x] Add phone format validation and write corresponding ADR
+- [x] Add address field structural validation
 
 ### 1.5 Related People Service (`src/lib/related-people/service.ts`)
 - [ ] Implement `listRelatedPeople(accountId)`
