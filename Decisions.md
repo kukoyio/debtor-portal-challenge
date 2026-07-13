@@ -45,3 +45,5 @@ The database itself won't allow a negative balance. Rather than quietly
 reducing the payment to whatever's owed, the app tells the user the 
 amount is too high and asks for a smaller one which is clearer than guessing 
 what they meant.
+
+## ADR-008: extended schema with due_date/support_phone/support_email columns, missing from starter migration but required as read-only fields per account-context.md

@@ -380,7 +380,7 @@ function DashboardView({
                 value={`${formatCurrency(
                   account.lastPaymentAmountCents,
                   account.currency,
-                )} on ${formatDate(account.lastPaymentDate)}`}
+                )} on ${account.lastPaymentDate ? formatDate(account.lastPaymentDate) : 'N/A'}`}
               />
             </div>
           ) : null}

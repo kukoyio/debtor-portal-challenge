@@ -23,7 +23,7 @@ export type AccountHolder = {
   status: string;
   daysPastDue: number;
   minimumPaymentCents: number;
-  lastPaymentDate: string;
+  lastPaymentDate: string | null;
   lastPaymentAmountCents: number;
 };
 

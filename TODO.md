@@ -34,19 +34,19 @@
 ## PHASE 1 — Day 1: Database & Service Layer
 
 ### 1.1 Database Initializer
-- [ ] Execute `supabase/migrations/` schema inside Supabase SQL editor
-- [ ] Verify core tables created properly in Supabase Table Editor
+- [x] Execute `supabase/migrations/` schema inside Supabase SQL editor
+- [x] Verify core tables created properly in Supabase Table Editor
 
 ### 1.2 Database Client Setup
-- [ ] Create server-only Supabase client using service_role key (`src/lib/supabase/server.ts`)
-- [ ] Test client connectivity with a throwaway script and delete/comment out
+- [x] Create server-only Supabase client using service_role key (`src/lib/supabase/server.ts`)
+- [x] Test client connectivity with a throwaway script and delete/comment out
 
 ### 1.3 Schema Review
-- [ ] Finalize schema choices against `account-context.md`
-- [ ] Document schema decisions or migrations in `DECISIONS.md`
+- [x] Finalize schema choices against `account-context.md`
+- [x] Document schema decisions or migrations in `DECISIONS.md`
 
 ### 1.4 Account Service (`src/lib/account/service.ts`)
-- [ ] Implement `getAccount(accountId)`
+- [x] Implement `getAccount(accountId)`
 - [ ] Implement `updateAccountHolder(accountId, fields)`
 - [ ] Implement `updatePreferredContactMethod(accountId, method)`
 - [ ] Add email format validation
