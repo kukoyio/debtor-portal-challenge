@@ -55,11 +55,11 @@
 - [x] Add address field structural validation
 
 ### 1.5 Related People Service (`src/lib/related-people/service.ts`)
-- [ ] Implement `listRelatedPeople(accountId)`
-- [ ] Implement `addRelatedPerson(accountId, data)`
-- [ ] Implement `updateRelatedPerson(accountId, personId, fields)`
-- [ ] Implement `removeRelatedPerson(accountId, personId)`
-- [ ] Implement `findRelatedPersonByName(accountId, name)`
+- [x] Implement `listRelatedPeople(accountId)`
+- [x] Implement `addRelatedPerson(accountId, data)`
+- [x] Implement `updateRelatedPerson(accountId, personId, fields)`
+- [x] Implement `removeRelatedPerson(accountId, personId)`
+- [x] Implement `findRelatedPersonByName(accountId, name)`
 
 ### 1.6 Promises Service (`src/lib/promises/service.ts`)
 - [ ] Implement `listPromisesToPay(accountId)`
