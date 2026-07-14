@@ -104,9 +104,9 @@
 - [ ] Build global server try/catch wrapper returning error status 500
 
 ### 2.7 Notification Architecture
-- [ ] Implement password-encrypted PDF generator via `pdfkit` (`src/lib/notifications/pdf.ts`)
-- [ ] Implement `sendAccountChangeNotification()` using Resend SDK (`src/lib/notifications/account-change-notification.ts`)
-- [ ] Fall back to console logs if `RESEND_API_KEY` is missing, writing to `notification_attempts`
+- [x] Implement password-encrypted PDF generator via `pdfkit` (`src/lib/notifications/pdf.ts`)
+- [x] Implement `sendAccountChangeNotification()` using Resend SDK (`src/lib/notifications/account-change-notification.ts`)
+- [x] Fall back to console logs if `RESEND_API_KEY` is missing, writing to `notification_attempts`
 
 ### 2.8 Component Wiring
 - [ ] Hook `action-router.ts` write triggers up to notification system pipeline

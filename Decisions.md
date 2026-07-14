@@ -70,3 +70,32 @@ whichever chain the real code calls — they don't independently catch a
 mismatch between the test setup and the real query shape. Accepted as a 
 reasonable trade-off for a 3-day project; a stricter mock or integration 
 tests against a real Supabase instance would close this gap.
+
+## ADR-011: Notification PDFs are a full snapshot, not a diff
+The PDF attached to every account-change notification is always the
+account's full current summary — it does not describe what specifically
+changed. This keeps generation simple (no before/after tracking needed)
+and also acts as a security reassurance: if a change wasn't made by the
+account holder, seeing the entire current state of the account is more
+useful than a single changed line. The changeSummary passed to the
+email is a separate, generic one-line description (see ADR-014).
+
+## ADR-012: PDF owner and user passwords are the same value
+pdfkit supports separate userPassword (opens the file) and
+ownerPassword (controls permissions like printing/copying). Both are
+set to the same value — the last 4 digits of the account phone number —
+rather than introducing a second, permissions-only password.
+
+## ADR-013: Notification email redacts the recipient in return values only
+sendAccountChangeNotification's return value redacts the recipient
+email (e.g. j***@example.test) as defense-in-depth against a full email
+address ending up in application logs or an error tracker. This does
+not affect the actual send — Resend still receives the real, full
+address as the delivery target.
+
+## ADR-014: internalAccountId is resolved once per request, in the router
+Rather than each service function independently looking up the
+internal account UUID from the public accountId, the router resolves
+it once at the start of handleChatMessage and passes internalAccountId
+down to whichever service function it calls. This avoids redundant
+database round-trips per chat action.
