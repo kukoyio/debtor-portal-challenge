@@ -52,6 +52,18 @@ export async function createPromiseToPay(
 
   if (targetDate <= today) throw new Error("Due date must be a future date.");
 
+  const { data: account, error: accountError } = await supabaseServer
+    .from("account_holders")
+    .select("currency")
+    .eq("id", internalAccountId)
+    .single();
+
+  if (accountError || !account) {
+    throw new Error(
+      `Failed to fetch account currency: ${accountError?.message || "Account not found"}`,
+    );
+  }
+
   const { data, error } = await supabaseServer
     .from("promises_to_pay")
     .insert({
@@ -59,7 +71,7 @@ export async function createPromiseToPay(
       amount_cents: Math.round(payload.amountCents),
       due_date: payload.dueDate,
       status: "active",
-      currency: "EUR", // Currency hardcoded to EUR
+      currency: account.currency ?? "EUR",
     })
     .select()
     .single();

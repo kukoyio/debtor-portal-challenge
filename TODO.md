@@ -66,16 +66,16 @@
 - [x] Implement `createPromiseToPay(accountId, data)` with future-date enforcement
 
 ### 1.7 Payments Service (`src/lib/payments/service.ts`)
-- [ ] Implement `listTransactions(accountId)`
-- [ ] Implement `makePayment(accountId, amountCents)` with atomic balance reductions
+- [x] Implement `listTransactions(accountId)`
+- [x] Implement `makePayment(accountId, amountCents)` with atomic balance reductions
 
 ### 1.8 Appointments Service (`src/lib/appointments/service.ts`)
-- [ ] Implement `listFutureCallAppointments(accountId)`
-- [ ] Implement `bookCallAppointment(accountId, data)` with future-date enforcement
+- [x] Implement `listFutureCallAppointments(accountId)`
+- [x] Implement `bookCallAppointment(accountId, data)` with future-date enforcement
 
 ### 1.9 Service Layer Testing
-- [ ] Write Vitest unit tests covering happy paths and failure conditions for all services
-- [ ] Run `pnpm test` and ensure all tests are green
+- [x] Write Vitest unit tests covering happy paths and failure conditions for all services
+- [x] Run `pnpm test` and ensure all tests are green
 
 ---
 
