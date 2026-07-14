@@ -82,18 +82,18 @@
 ## PHASE 2 — Day 2: The Chat Brain & Integration
 
 ### 2.1 Dependencies
-- [ ] Run `pnpm add zod pdfkit resend openai` and `pnpm add -D @types/pdfkit`
+- [x] Run `pnpm add zod pdfkit resend openai` and `pnpm add -D @types/pdfkit`
 
 ### 2.2 Intent Parser (`src/lib/chat/intent-parser.ts`)
-- [ ] Build `parseIntent()` using structured JSON engine from LLM provider
-- [ ] Inject chat window history to handle multi-turn conversational updates
-- [ ] Implement fallback parsing catch to prevent system crashes
+- [x] Build `parseIntent()` using structured JSON engine from LLM provider
+- [x] Inject chat window history to handle multi-turn conversational updates
+- [x] Implement fallback parsing catch to prevent system crashes
 
 ### 2.3 Input Validation (`src/lib/chat/validators.ts`)
-- [ ] Build Zod schema validators mapping back to service-layer rules
+- [x] Build Zod schema validators mapping back to service-layer rules
 
 ### 2.4 State Management (`src/lib/chat/conversation-store.ts`)
-- [ ] Build in-memory message history container using a JavaScript `Map`
+- [x] Build in-memory message history container using a JavaScript `Map`
 
 ### 2.5 Core Routing Engine (`src/lib/chat/action-router.ts`)
 - [ ] Create `handleChatMessage()` central routing workflow

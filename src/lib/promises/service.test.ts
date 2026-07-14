@@ -5,25 +5,37 @@ import { listPromisesToPay, createPromiseToPay } from "./service";
 let mockDbData: any = null;
 let mockDbError: any = null;
 
+let mockCurrencyData: any = { currency: "EUR" };
+let mockCurrencyError: any = null;
+let currentTable: string | null = null;
+
 const mockChain = {
   select: vi.fn().mockReturnThis(),
   insert: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
-  single: vi
-    .fn()
-    .mockImplementation(() =>
-      Promise.resolve({ data: mockDbData, error: mockDbError }),
-    ),
-  then: vi
-    .fn()
-    .mockImplementation((resolve) =>
-      resolve({ data: mockDbData, error: mockDbError }),
-    ),
+  single: vi.fn().mockImplementation(() => {
+    if (currentTable === "account_holders") {
+      return Promise.resolve({
+        data: mockCurrencyData,
+        error: mockCurrencyError,
+      });
+    }
+    return Promise.resolve({ data: mockDbData, error: mockDbError });
+  }),
+  then: vi.fn().mockImplementation((resolve) => {
+    if (currentTable === "account_holders") {
+      return resolve({ data: mockCurrencyData, error: mockCurrencyError });
+    }
+    return resolve({ data: mockDbData, error: mockDbError });
+  }),
 };
 
 vi.mock("@/lib/supabase/server", () => ({
   supabaseServer: {
-    from: vi.fn(() => mockChain),
+    from: vi.fn((table: string) => {
+      currentTable = table;
+      return mockChain;
+    }),
   },
 }));
 
@@ -64,6 +76,10 @@ describe("Promises to Pay Service", () => {
     vi.clearAllMocks();
     mockDbData = [validPromiseRow];
     mockDbError = null;
+
+    mockCurrencyData = { currency: "EUR" };
+    mockCurrencyError = null;
+    currentTable = null;
   });
 
   // listPromisesToPay
@@ -94,7 +110,7 @@ describe("Promises to Pay Service", () => {
   // createPromiseToPay
   describe("createPromiseToPay", () => {
     beforeEach(() => {
-      mockDbData = validPromiseRow; // single() returns a single record
+      mockDbData = validPromiseRow;
     });
 
     describe("Valid Inputs", () => {
@@ -168,6 +184,9 @@ describe("Promises to Pay Service", () => {
         mockDbData = null;
         mockDbError = { message: "Insert constraint failed" };
 
+        mockCurrencyData = { currency: "EUR" };
+        mockCurrencyError = null;
+        
         await expect(
           createPromiseToPay("acc_uuid_01", {
             amountCents: 5000,

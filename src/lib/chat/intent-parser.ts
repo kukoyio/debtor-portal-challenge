@@ -1,6 +1,5 @@
 import { ChatMessage, ChatAction } from "./types";
 import { GoogleGenAI } from "@google/genai";
-import { resolve } from "path";
 import { z } from "zod";
 
 const ai = new GoogleGenAI({});
