@@ -1,0 +1,257 @@
+import { ChatMessage, ChatAction } from "./types";
+import { GoogleGenAI } from "@google/genai";
+import { resolve } from "path";
+import { z } from "zod";
+
+const ai = new GoogleGenAI({});
+
+const requestSchema = z.object({
+  action: z.enum([
+    "read_account",
+    "update_account_holder",
+    "read_preferred_contact_method",
+    "update_preferred_contact_method",
+    "add_related_person",
+    "update_related_person",
+    "remove_related_person",
+    "read_related_people",
+    "create_promise_to_pay",
+    "read_promises_to_pay",
+    "mock_payment",
+    "read_transactions",
+    "book_call_appointment",
+    "read_call_appointments",
+    "clarify",
+    "unsupported",
+  ]),
+  fields: z.record(z.string(), z.unknown()),
+  missingFields: z.array(z.string()),
+});
+
+type ParsedIntent = {
+  action: ChatAction;
+  fields: Record<string, unknown>;
+  missingFields: string[];
+};
+
+export function buildSystemPrompt(currentDateIso: string): string {
+  return `You are a strict transactional routing system for a customer account
+self-service chatbot. You are NOT a conversational assistant. You never greet,
+apologize, explain, or add commentary — your only job is to read a customer's
+message and return one JSON object describing what action to take.
+
+CURRENT DATE AND TIME: ${currentDateIso}
+Use this to resolve relative phrases like "tomorrow", "next Friday at 3pm",
+or "the 1st of next month" into exact dates/timestamps.
+
+===== OUTPUT FORMAT =====
+Return ONLY a raw JSON object. No markdown code fences, no explanation text
+before or after, no conversational wrapper. The response must start with '{'
+and be valid JSON matching this exact shape:
+
+{
+  "action": "<one of the actions below>",
+  "fields": { ... },
+  "missingFields": [ ... ]
+}
+
+===== CRITICAL RULE: NEVER INVENT FIELD VALUES =====
+If the user's message does not clearly state a value for a required field,
+DO NOT guess, assume, or fill in a plausible-looking value. Leave it out of
+"fields" and list its name in "missingFields" instead, with action set to
+"clarify". This applies especially to amounts, dates, phone numbers, and
+email addresses — getting these wrong has real consequences for the customer.
+
+===== ACTION MATRIX =====
+Each action below lists its required fields and optional fields. Fields not
+listed are ignored even if present in "fields".
+
+- read_account — no fields.
+- update_account_holder — at least one of: firstName, lastName, email,
+  phone, address (object: line1, line2?, city, postalCode, country). If the
+  user says "update my details" with no specifics, treat as missing and ask
+  what they want to change.
+- read_preferred_contact_method — no fields.
+- update_preferred_contact_method — required: contactMethod
+  (one of "email" | "sms" | "phone").
+- add_related_person — required: name, email, phone. Optional: relationship,
+  authorizedToAct (boolean — true only if the user explicitly says this
+  person can act/speak on their behalf; default false if unstated).
+- update_related_person — required: personName (identifies who to update),
+  plus at least one of: name, email, phone, relationship, authorizedToAct
+  (the new value(s) to change).
+- remove_related_person — required: personName.
+- read_related_people — no fields.
+- create_promise_to_pay — required: amountCents (integer, e.g. "500 euro"
+  means 50000), dueDate (format: YYYY-MM-DD, must be a future date).
+- read_promises_to_pay — no fields.
+- mock_payment — required: amountCents (integer, e.g. "150 euro" means 15000).
+- read_transactions — no fields.
+- book_call_appointment — required: scheduledAt (full ISO 8601 datetime,
+  resolved from relative phrases using CURRENT DATE AND TIME above), phone.
+  Optional: reason.
+- read_call_appointments — no fields.
+
+===== ROUTING LOGIC =====
+1. If the message clearly matches one action AND all its required fields are
+   present and unambiguous → return that action, with "fields" populated and
+   "missingFields" as an empty array.
+2. If the message clearly wants an action but is missing one or more required
+   fields, or a required field is ambiguous (e.g. two related people with the
+   same first name, and it's unclear which one) → return action: "clarify",
+   with whatever fields WERE found in "fields", and the names of the missing
+   or ambiguous fields in "missingFields".
+3. If the message is off-topic, a greeting, small talk, or something this
+   system cannot do at all → return action: "unsupported", with empty
+   "fields" and empty "missingFields".
+
+===== USING CONVERSATION HISTORY =====
+You will be given the last few messages of this conversation. If the
+assistant's previous message asked the user for specific missing
+information (e.g. "what date and time works for you?"), and the user's new
+message appears to answer that question, treat it as a continuation of the
+SAME action from that earlier turn — combine the previously-known fields
+with the newly-provided ones, and re-evaluate whether all required fields
+are now present. Do not treat it as an unrelated new request.
+
+===== EXAMPLES =====
+User: "Pay 150 euro now."
+→ {"action": "mock_payment", "fields": {"amountCents": 15000}, "missingFields": []}
+
+User: "Can I book a call?"
+→ {"action": "clarify", "fields": {}, "missingFields": ["scheduledAt", "phone"]}
+
+User: "What's the weather like today?"
+→ {"action": "unsupported", "fields": {}, "missingFields": []}
+
+User: "Change Mark's phone number to +353831112233."
+→ {"action": "update_related_person", "fields": {"personName": "Mark", "phone": "+353831112233"}, "missingFields": []}`;
+}
+
+export async function parseIntent(
+  message: string,
+  context: { recentMessages: ChatMessage[] },
+): Promise<ParsedIntent> {
+  const fallback: ParsedIntent = {
+    action: "unsupported",
+    fields: {},
+    missingFields: [],
+  };
+  // One retry on failure — occasional LLM output glitches (e.g. degenerate
+  // repetition loops) are usually transient and succeed on a second attempt.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      // Always generate exact current timestamp whenever function is called
+      const currentDateIso = new Date().toISOString();
+
+      // Last 5 messages is enough context for slot-filling follow-ups without
+      // blowing up token usage on long conversations.
+      const historyParts = context.recentMessages.slice(-5).map((msg) => ({
+        role: msg.role === "account_holder" ? "user" : "model",
+        parts: [{ text: msg.content }],
+      }));
+
+      const conversationContents = [
+        ...historyParts,
+        { role: "user", parts: [{ text: message }] },
+      ];
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: conversationContents,
+        config: {
+          systemInstruction: buildSystemPrompt(currentDateIso),
+          temperature: 0.1, // Low temperature forces deterministic JSON routing
+          maxOutputTokens: 2048,
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              action: {
+                type: "STRING",
+                enum: [
+                  "read_account",
+                  "update_account_holder",
+                  "read_preferred_contact_method",
+                  "update_preferred_contact_method",
+                  "add_related_person",
+                  "update_related_person",
+                  "remove_related_person",
+                  "read_related_people",
+                  "create_promise_to_pay",
+                  "read_promises_to_pay",
+                  "mock_payment",
+                  "read_transactions",
+                  "book_call_appointment",
+                  "read_call_appointments",
+                  "clarify",
+                  "unsupported",
+                ],
+              },
+              fields: {
+                type: "OBJECT",
+                properties: {
+                  firstName: { type: "STRING" },
+                  lastName: { type: "STRING" },
+                  email: { type: "STRING" },
+                  phone: { type: "STRING" },
+                  address: {
+                    type: "OBJECT",
+                    properties: {
+                      line1: { type: "STRING" },
+                      line2: { type: "STRING" },
+                      city: { type: "STRING" },
+                      postalCode: { type: "STRING" },
+                      country: { type: "STRING" },
+                    },
+                  },
+                  contactMethod: {
+                    type: "STRING",
+                    enum: ["email", "sms", "phone"],
+                  },
+                  name: { type: "STRING" },
+                  personName: { type: "STRING" },
+                  relationship: { type: "STRING" },
+                  authorizedToAct: { type: "BOOLEAN" },
+                  amountCents: { type: "INTEGER" },
+                  dueDate: { type: "STRING" },
+                  scheduledAt: { type: "STRING" },
+                  reason: { type: "STRING" },
+                },
+              },
+              missingFields: {
+                type: "ARRAY",
+                items: { type: "STRING" },
+              },
+            },
+            required: ["action", "fields", "missingFields"],
+          },
+        },
+      });
+
+      const responseText = response.text;
+      if (!responseText) return fallback;
+
+      const cleanJson = responseText.replace(/```json\n?|\n?```/g, "").trim();
+      const rawParsed = JSON.parse(cleanJson);
+      const validated = requestSchema.parse(rawParsed);
+
+      return {
+        action: validated.action as ChatAction,
+        fields: validated.fields,
+        missingFields: validated.missingFields,
+      };
+    } catch (error) {
+      console.error(
+        `[IntentParser Error]: Attempt ${attempt + 1} failed.`,
+        error,
+      );
+      if (attempt === 1) return fallback;
+      await new Promise((resolve) => setTimeout(resolve, 400)); // pause before retry help with 503 errors
+    }
+  }
+  return fallback;
+}
