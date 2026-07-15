@@ -7,7 +7,7 @@ Plain code (not AI) then checks if that's valid and makes the actual
 database change. This way, every action is checked and testable, and 
 the AI is never the thing "in charge."
 
-## ADR-002: LLM provider = Gemini 3-5 Flash
+## ADR-002: LLM provider = Gemini 3.5 Flash
 Chose Gemini because it has a free tier which matters since this is a short, 
 low-budget project. It's also fast, which keeps the chat feeling responsive 
 rather than laggy.  Trade-off: less battle-tested for forcing strict structured 
@@ -128,3 +128,14 @@ mutation would then re-request a cached response rather than genuinely
 re-running getAccount(). Forcing dynamic rendering ensures every page
 load/refresh reflects current database state — correct for account data
 that changes via chat actions between deploys.
+
+## ADR-018: Deterministic regex fallback for email/phone extraction
+Testing showed the LLM occasionally omits email or phone from `fields` 
+even when clearly present in the message (see Known Limitations). Rather 
+than relying solely on prompt engineering, a code-level regex pass 
+re-scans the raw message for email/phone patterns and fills in `fields` 
+if the LLM's own extraction missed them, for the three actions most 
+affected (add/update related person, update account holder). This is a 
+deterministic safety net on top of the LLM, not a replacement for it — 
+name and date fields aren't reliably regex-extractable and still depend 
+on the LLM.

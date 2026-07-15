@@ -16,10 +16,10 @@ This project uses Supabase for persistent data storage.
 *   Log in to your Supabase account and create a new database project.
 *   Navigate to the **SQL Editor** in your Supabase dashboard.
 *   Locate the migration files in the `supabase/migrations/` directory of this repository.
-*   Copy and run the contents of these files in the SQL Editor to set up the required table schemas and populate them with the initial synthetic user seed data[cite: 1].
+*   Copy and run the contents of these files in the SQL Editor to set up the required table schemas and populate them with the initial synthetic user seed data.
 
 ### 2. Environment Variables
-Copy the example environment file to create your local environment configuration[cite: 1]:
+Copy the example environment file to create your local environment configuration:
 
 ```bash
 cp .env.local.example .env.local
@@ -91,7 +91,7 @@ This application uses a clean three-layer architecture to ensure the AI never ha
 A Next.js dashboard reads and displays data directly from Supabase.
 
 #### Brain Layer
-The `/api/chat` route processes incoming messages. Gemini 3-5 Flash translates the user's natural language into a structured action (for example, `mock_payment`).
+The `/api/chat` route processes incoming messages. Gemini 3.5 Flash translates the user's natural language into a structured action (for example, `mock_payment`).
 
 #### Validation & Service Layer
 Before anything reaches Supabase, plain TypeScript code using Zod schemas strictly validates the data. If validation succeeds, the appropriate service performs the database update.
@@ -103,7 +103,7 @@ Every successful data change triggers a background task that generates an encryp
 
 ### 2. Key Decisions & Trade-offs
 
-#### Gemini 3-5 Flash over OpenAI (ADR-002)
+#### Gemini 3.5 Flash over OpenAI (ADR-002)
 
 Gemini was chosen because of its generous free tier and fast response times. Since it can occasionally struggle to produce strictly formatted JSON, defensive fallback logic was implemented to maintain system stability.
 
@@ -167,3 +167,44 @@ If this system were being prepared for production, the highest-priority improvem
 - **Notification retry queue:** Add a background worker to automatically retry failed email deliveries caused by temporary network issues.
 - **Strict ID unification (ADR-015):** Standardize internal database service interfaces so all services use the same ID conventions.
 - **Verified email domain:** Replace the Resend sandbox domain with a fully authenticated production domain.
+
+---
+
+### 6. Known Limitations
+
+#### LLM Multi-Field Extraction Reliability
+
+Testing surfaced a repeatable pattern: when a single message requires
+extracting two or more required fields at once (e.g. name + email + phone
+when adding a related person), the model occasionally omitted one field
+from its structured output — and its own `missingFields` self-report did
+not always catch its own omission.
+
+**Mitigation:** every parsed result is independently re-validated against
+required-field rules in `validators.ts` regardless of what the model
+claims, so an omission never results in an incomplete database write —
+only, at worst, one extra clarifying turn. A deterministic regex-based
+fallback (see ADR-018) additionally recovers email/phone values directly
+from the raw message for the actions most affected by this, before
+validation runs.
+
+#### Multi-Turn Conversation Continuity
+
+Conversation history is held in an in-memory store scoped to the running
+server process (see ADR-006). This is reliable for a continuously-running
+local dev process, but is not guaranteed to persist across requests in a
+serverless deployment (e.g. Vercel), where consecutive requests to the
+same conversation are not guaranteed to hit the same running instance.
+As a result, multi-turn slot-filling (answering a follow-up question in a
+later message) may not reliably resolve in the deployed environment even
+when it works correctly locally. The robust fix is backing conversation
+history with a database table instead of in-memory state — scoped out
+for time and listed under Next Steps.
+
+#### Read Actions Return Full Account Detail
+
+`read_account` currently has no field-level granularity — asking "what's
+my phone number" and asking "what's on my account" both return the same
+full account summary. Functionally correct but not minimal. A future
+iteration would add an optional `requestedField` to the action matrix so
+replies can be scoped to exactly what was asked.

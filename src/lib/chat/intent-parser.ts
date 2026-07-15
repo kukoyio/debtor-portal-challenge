@@ -228,7 +228,7 @@ export async function parseIntent(
 
       try {
         const response = await ai.models.generateContent({
-          model: "gemini-3.1-flash-lite", // gemini-3.5-flash or gemini-3.1-flash-lite
+          model: "gemini-3.5-flash", // gemini-3.5-flash or gemini-3.1-flash-lite
           contents: conversationContents,
           config: {
             systemInstruction: buildSystemPrompt(currentDateIso),
