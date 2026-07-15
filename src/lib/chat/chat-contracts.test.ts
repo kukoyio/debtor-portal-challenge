@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AccountContext, AccountHolder, PromiseToPay } from "../account/types";
+import type {
+  AccountContext,
+  AccountHolder,
+  PromiseToPay,
+} from "../account/types";
 import { handleChatMessage } from "./action-router";
 import { parseIntent } from "./intent-parser";
 import {
@@ -137,7 +141,7 @@ function expectConversation(
 
 describe("chat action acceptance contracts", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockGetInternalAccountId.mockResolvedValue("internal-account-1");
     mockGetAccount.mockResolvedValue(buildAccountSnapshot());
     mockSendAccountChangeNotification.mockResolvedValue({
@@ -267,7 +271,9 @@ describe("chat action acceptance contracts", () => {
     );
 
     const notificationResult = (await mockSendAccountChangeNotification.mock
-      .results[0].value) as Awaited<ReturnType<typeof sendAccountChangeNotification>>;
+      .results[0].value) as Awaited<
+      ReturnType<typeof sendAccountChangeNotification>
+    >;
     expect(notificationResult.redactedRecipient).toContain("***");
     expect(notificationResult.redactedRecipient).not.toContain(
       "person@example.test",
@@ -550,5 +556,96 @@ describe("chat action acceptance contracts", () => {
     expect(result.reply).toContain("valid email");
     expect(mockUpdateAccountHolder).not.toHaveBeenCalled();
     expect(mockSendAccountChangeNotification).not.toHaveBeenCalled();
+  });
+
+  it("completes a booking across two turns after clarify (multi-turn continuation)", async () => {
+    const accountId = "acct-multiturn";
+    const conversationId = "conv-multiturn";
+
+    mockParseIntent.mockResolvedValueOnce({
+      action: "clarify",
+      fields: {},
+      missingFields: ["scheduledAt"],
+    } as Awaited<ReturnType<typeof parseIntent>>);
+
+    const turn1 = await handleChatMessage({
+      accountId,
+      message: "Can I book a call?",
+      conversationId,
+    });
+
+    expect(turn1.success).toBe(false);
+    expect(turn1.action).toBe("clarify");
+    expect(mockBookCallAppointment).not.toHaveBeenCalled();
+
+    mockParseIntent.mockResolvedValueOnce({
+      action: "book_call_appointment",
+      fields: {
+        scheduledAt: "2030-01-15T10:00:00.000Z",
+        phone: "+353871112222",
+      },
+      missingFields: [],
+    } as Awaited<ReturnType<typeof parseIntent>>);
+    mockBookCallAppointment.mockResolvedValueOnce({
+      id: "appt-multiturn",
+      scheduledAt: "2030-01-15T10:00:00.000Z",
+      phone: "+353871112222",
+      status: "scheduled",
+    } as Awaited<ReturnType<typeof bookCallAppointment>>);
+
+    const turn2 = await handleChatMessage({
+      accountId,
+      message: "Next Tuesday at 10am, +353871112222",
+      conversationId,
+    });
+    expect(turn2.success).toBe(true);
+    expect(turn2.callAppointment).toMatchObject({
+      scheduledAt: "2030-01-15T10:00:00.000Z",
+    });
+    expect(mockBookCallAppointment).toHaveBeenCalledTimes(1);
+
+    const allMessages = getRecentMessages(conversationId);
+    expect(allMessages).toHaveLength(4);
+    expect(allMessages[0]).toMatchObject({ content: "Can I book a call?" });
+    expect(allMessages[2]).toMatchObject({
+      content: "Next Tuesday at 10am, +353871112222",
+    });
+  });
+
+  it("falls back to unsupported when parseIntent returns an action outside the known enum", async () => {
+    mockParseIntent.mockResolvedValueOnce({
+      action: "schedule_a_flight", // hallucinated: not a real ChatAction
+      fields: {},
+      missingFields: [],
+    } as any);
+    const result = await handleChatMessage({
+      accountId: "acct-hallucinated",
+      message: "Can you book me a flight?",
+      conversationId: "conv-hallucinated",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.action).toBe("unsupported");
+    expect(mockUpdateAccountHolder).not.toHaveBeenCalled();
+    expect(mockSendAccountChangeNotification).not.toHaveBeenCalled();
+  });
+
+  it("does not crash when parseIntent returns a garbled fields object", async () => {
+    mockParseIntent.mockResolvedValueOnce({
+      action: "update_account_holder",
+      fields: null, // malformed — validator must handle this without throwing
+      missingFields: [],
+    } as any);
+
+    const result = await handleChatMessage({
+      accountId: "acct-garbled",
+      message: "Update my details",
+      conversationId: "conv-garbled",
+    });
+
+    expect(result.success).toBe(false);
+    expect(mockUpdateAccountHolder).not.toHaveBeenCalled();
+    expect(mockSendAccountChangeNotification).not.toHaveBeenCalled();
+    expect(result.reply).toBeTruthy();
   });
 });

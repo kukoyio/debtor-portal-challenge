@@ -137,23 +137,23 @@
 - [x] Audit workspace for accidental tracking of `.env.local` histories
 
 ### 3.3 Remote Verification
-- [ ] Check Vercel project environment arrays match local settings
-- [ ] Push to main branch and re-verify all 9 manual scenarios against production build URL
+- [x] Check Vercel project environment arrays match local settings
+- [x] Push to main branch and re-verify all 9 manual scenarios against production build URL
 
 ### 3.4 Architecture Layout
-- [ ] Map pipeline out inside `architecture-diagram.md` utilizing Mermaid format
+- [x] Map pipeline out inside `architecture-diagram.md` utilizing Mermaid format
 
 ### 3.5 Documentation Finalization
-- [ ] Populate main `README.md` with targeted design notes sourced from `DECISIONS.md`
-- [ ] Surface production Vercel URL explicitly at top of `README.md`
+- [x] Populate main `README.md` with targeted design notes sourced from `DECISIONS.md`
+- [x] Surface production Vercel URL explicitly at top of `README.md`
 
 ### 3.6 Evaluation Compliance Audit
 - [x] Check persistence durability (data survives browser refresh)
-- [ ] Verify test arrays execute completely clean via `pnpm test`
+- [x] Verify test arrays execute completely clean via `pnpm test`
 - [x] Confirm no third-party payment gateways are hooked up
-- [ ] Confirm no text-exposed sensitive values escape via notification emails
-- [ ] Check `notification_attempts` logs entries for every structural mutation
+- [x] Confirm no text-exposed sensitive values escape via notification emails
+- [x] Check `notification_attempts` logs entries for every structural mutation
 
 ### 3.7 Delivery Submission
 - [x] Confirm access rights remain valid for `wardch` and `alinayevstropova`
-- [ ] Fill out and dispatch Google Submission Form
+- [x] Fill out and dispatch Google Submission Form

@@ -123,14 +123,16 @@ export async function handleChatMessage(
         case "read_account": {
           const account = await getAccount(request.accountId);
           const a = account.account;
-          const accountSummary = `Here is a summary of your account:
-
-          Status: ${a.status}
-          Current Balance: ${(a.balanceCents / 100).toFixed(2)} ${a.currency}
-          Preferred Contact: ${a.preferredContactMethod}
-          Phone: ${a.phone}
-          Email: ${a.email}
-          Billing Address: ${a.address.line1}, ${a.address.city}, ${a.address.postalCode}, ${a.address.country}`;
+          const accountSummary = [
+            "Here is a summary of your account:",
+            "",
+            `Status: ${a.status}`,
+            `Current Balance: ${(a.balanceCents / 100).toFixed(2)} ${a.currency}`,
+            `Preferred Contact: ${a.preferredContactMethod}`,
+            `Phone: ${a.phone}`,
+            `Email: ${a.email}`,
+            `Billing Address: ${a.address.line1}, ${a.address.city}, ${a.address.postalCode}, ${a.address.country}`,
+          ].join("\n");
           result = {
             action: "read_account",
             success: true,

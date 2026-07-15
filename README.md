@@ -91,7 +91,7 @@ This application uses a clean three-layer architecture to ensure the AI never ha
 A Next.js dashboard reads and displays data directly from Supabase.
 
 #### Brain Layer
-The `/api/chat` route processes incoming messages. Gemini 1.5 Flash translates the user's natural language into a structured action (for example, `mock_payment`).
+The `/api/chat` route processes incoming messages. Gemini 3-5 Flash translates the user's natural language into a structured action (for example, `mock_payment`).
 
 #### Validation & Service Layer
 Before anything reaches Supabase, plain TypeScript code using Zod schemas strictly validates the data. If validation succeeds, the appropriate service performs the database update.
@@ -103,7 +103,7 @@ Every successful data change triggers a background task that generates an encryp
 
 ### 2. Key Decisions & Trade-offs
 
-#### Gemini 1.5 Flash over OpenAI (ADR-002)
+#### Gemini 3-5 Flash over OpenAI (ADR-002)
 
 Gemini was chosen because of its generous free tier and fast response times. Since it can occasionally struggle to produce strictly formatted JSON, defensive fallback logic was implemented to maintain system stability.
 

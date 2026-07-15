@@ -7,7 +7,7 @@ Plain code (not AI) then checks if that's valid and makes the actual
 database change. This way, every action is checked and testable, and 
 the AI is never the thing "in charge."
 
-## ADR-002: LLM provider = Gemini 1.5 Flash
+## ADR-002: LLM provider = Gemini 3-5 Flash
 Chose Gemini because it has a free tier which matters since this is a short, 
 low-budget project. It's also fast, which keeps the chat feeling responsive 
 rather than laggy.  Trade-off: less battle-tested for forcing strict structured 
@@ -119,3 +119,12 @@ from an authorized related person — every message is treated as coming
 from the account holder. changedBy is therefore hardcoded to
 "account_holder" in notifyAfterChange; the type still supports
 "authorized_representative" for when a real identity layer exists.
+
+## ADR-017: page.tsx forced to dynamic rendering
+Without `export const dynamic = "force-dynamic"`, Next.js statically
+renders this page at build time (no dynamic APIs are used), freezing
+account data as of the last deploy. router.refresh() after a chat
+mutation would then re-request a cached response rather than genuinely
+re-running getAccount(). Forcing dynamic rendering ensures every page
+load/refresh reflects current database state — correct for account data
+that changes via chat actions between deploys.
