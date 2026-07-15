@@ -11,7 +11,7 @@ the AI is never the thing "in charge."
 Chose Gemini because it has a free tier which matters since this is a short, 
 low-budget project. It's also fast, which keeps the chat feeling responsive 
 rather than laggy.  Trade-off: less battle-tested for forcing strict structured 
-JSON output  compared to OpenAI, so the intent parser needed a bit more defensive 
+JSON output compared to OpenAI, so the intent parser needed a bit more defensive 
 handling in case the model's output doesn't match the expected shape.
 
 ## ADR-003: PDF library = pdfkit, not pdf-lib
@@ -99,3 +99,23 @@ internal account UUID from the public accountId, the router resolves
 it once at the start of handleChatMessage and passes internalAccountId
 down to whichever service function it calls. This avoids redundant
 database round-trips per chat action.
+
+## ADR-015: account/service.ts and the other service files use different ID conventions
+account/service.ts functions (getAccount, updateAccountHolder,
+updatePreferredContactMethod) accept the public accountId and resolve
+the row internally via the account_id column. The related-people,
+promises, payments, and appointments service files instead accept the
+already-resolved internalAccountId directly, since their tables are
+foreign-keyed to account_holders.id rather than the public accountId.
+The router calls each service with whichever id shape it actually
+expects. Not unified into one convention for time reasons — a future
+pass could standardize all service functions to accept internalAccountId
+for consistency and to avoid the extra getInternalAccountId lookup
+account/service.ts's functions do internally on every call.
+
+## ADR-016: changedBy is always "account_holder"
+The chat has no identity/auth layer distinguishing the account holder
+from an authorized related person — every message is treated as coming
+from the account holder. changedBy is therefore hardcoded to
+"account_holder" in notifyAfterChange; the type still supports
+"authorized_representative" for when a real identity layer exists.

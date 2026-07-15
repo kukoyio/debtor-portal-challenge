@@ -123,15 +123,14 @@ export async function handleChatMessage(
         case "read_account": {
           const account = await getAccount(request.accountId);
           const a = account.account;
-          const accountSummary = `Here is a summary of your account details:
+          const accountSummary = `Here is a summary of your account:
 
-* **Status**: ${a.status}
-* **Current Balance**: ${(a.balanceCents / 100).toFixed(2)} ${a.currency}
-* **Preferred Contact**: ${a.preferredContactMethod}
-* **Contact Details**: 
-  * Phone: ${a.phone}
-  * Email: ${a.email}
-* **Billing Address**: ${a.address.line1}, ${a.address.city}, ${a.address.postalCode}, ${a.address.country}`;
+          Status: ${a.status}
+          Current Balance: ${(a.balanceCents / 100).toFixed(2)} ${a.currency}
+          Preferred Contact: ${a.preferredContactMethod}
+          Phone: ${a.phone}
+          Email: ${a.email}
+          Billing Address: ${a.address.line1}, ${a.address.city}, ${a.address.postalCode}, ${a.address.country}`;
           result = {
             action: "read_account",
             success: true,
@@ -218,7 +217,7 @@ export async function handleChatMessage(
           const list = people
             .map(
               (p) =>
-                `* **${p.name}** (${p.relationship || "Relationship not specified"})\n  * **Authorization**: ${p.authorizedToAct ? "Authorized to act on account" : "No authorization to act"}`,
+                `- ${p.name} (${p.relationship || "relationship not specified"}) — ${p.authorizedToAct ? "authorized to act on account" : "not authorized to act"}`,
             )
             .join("\n");
           result = {
@@ -346,7 +345,7 @@ export async function handleChatMessage(
           const list = promises
             .map(
               (p) =>
-                `* **${(p.amountCents / 100).toFixed(2)} ${p.currency}** due on ${p.dueDate} [Status: ${p.status}]`,
+                `- ${(p.amountCents / 100).toFixed(2)} ${p.currency} due on ${p.dueDate} — status: ${p.status}`,
             )
             .join("\n");
           result = {
@@ -410,7 +409,7 @@ export async function handleChatMessage(
           const list = transactions
             .map(
               (t) =>
-                `* **${t.transactionDate}**: ${t.type.toUpperCase()} of ${(t.amountCents / 100).toFixed(2)} ${t.currency} [Status: ${t.status}]`,
+                `- ${t.transactionDate}: ${t.type} of ${(t.amountCents / 100).toFixed(2)} ${t.currency} — status: ${t.status}`,
             )
             .join("\n");
           result = {
@@ -473,7 +472,7 @@ export async function handleChatMessage(
           const list = appointments
             .map(
               (a) =>
-                `* **${a.scheduledAt}**\n  * **Phone**: ${a.phone}\n  * **Reason**: ${a.reason || "General Account Discussion"}\n  * **Status**: ${a.status}`,
+                `- ${new Date(a.scheduledAt).toLocaleString()} — phone: ${a.phone} — ${a.reason || "general account discussion"} (${a.status})`,
             )
             .join("\n");
           result = {

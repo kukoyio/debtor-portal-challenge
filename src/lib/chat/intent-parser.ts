@@ -1,5 +1,5 @@
 import { ChatMessage, ChatAction } from "./types";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 
 const ai = new GoogleGenAI({});
@@ -105,6 +105,13 @@ listed are ignored even if present in "fields".
 3. If the message is off-topic, a greeting, small talk, or something this
    system cannot do at all → return action: "unsupported", with empty
    "fields" and empty "missingFields".
+4. Before finalizing "fields" and "missingFields" for any action, re-read the
+   user's message (and, if continuing a prior turn, the combined context)
+   one field at a time: for each field required by the action, explicitly
+   check "is this value present anywhere in the text?" before deciding it's
+   missing. Do not let extracting one field cause you to skip checking for
+   another — a message can contain a name, an email, and a phone number all
+   at once, and each must be checked independently.
 
 ===== USING CONVERSATION HISTORY =====
 You will be given the last few messages of this conversation. If the
@@ -129,7 +136,15 @@ User: "Change Mark's phone number to +353831112233."
 → {"action": "update_related_person", "fields": {"personName": "Mark", "phone": "+353831112233"}, "missingFields": []}
 
 User: "Add Mark Murphy, mark@example.test, +353831998877 so he can act for me."
-→ {"action": "add_related_person", "fields": {"name": "Mark Murphy", "email": "mark@example.test", "phone": "+353831998877", "authorizedToAct": true}, "missingFields": []}`;
+→ {"action": "add_related_person", "fields": {"name": "Mark Murphy", "email": "mark@example.test", "phone": "+353831998877", "authorizedToAct": true}, "missingFields": []}
+
+User: "Add my sister Sarah Byrne, sarah.byrne@example.test, +353851122334."
+→ {"action": "add_related_person", "fields": {"name": "Sarah Byrne", "email": "sarah.byrne@example.test", "phone": "+353851122334", "relationship": "sister"}, "missingFields": []}
+
+User: "Can I book a call?"
+Assistant: "Could you tell me: what date/time, and what phone number?"
+User: "Next Tuesday at 10am, +353871234567"
+→ {"action": "book_call_appointment", "fields": {"scheduledAt": "2026-07-21T10:00:00.000Z", "phone": "+353871234567"}, "missingFields": []}`;
 }
 
 export async function parseIntent(
@@ -164,14 +179,14 @@ export async function parseIntent(
 
       try {
         const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash", // gemini-3.5-flash or gemini-3.1-flash-lite
+          model: "gemini-3.1-flash-lite", // gemini-3.5-flash or gemini-3.1-flash-lite
           contents: conversationContents,
           config: {
             systemInstruction: buildSystemPrompt(currentDateIso),
             temperature: 0.3, 
             maxOutputTokens: 2048,
             thinkingConfig: {
-              thinkingBudget: 0,
+              thinkingLevel: ThinkingLevel.LOW
             },
             responseMimeType: "application/json",
             responseSchema: {
@@ -243,12 +258,9 @@ export async function parseIntent(
         const responseText = response.text;
         if (!responseText) return fallback;
 
-        console.log("[parseIntent] RAW response text:", responseText); // temporary
-
         const cleanJson = responseText.replace(/```json\n?|\n?```/g, "").trim();
         const rawParsed = JSON.parse(cleanJson);
         const validated = requestSchema.parse(rawParsed);
-        console.log("[parseIntent] raw fields from model:", JSON.stringify(validated.fields));
 
         return {
           action: validated.action as ChatAction,

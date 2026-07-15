@@ -109,32 +109,32 @@
 - [x] Fall back to console logs if `RESEND_API_KEY` is missing, writing to `notification_attempts`
 
 ### 2.8 Component Wiring
-- [ ] Hook `action-router.ts` write triggers up to notification system pipeline
-- [ ] Verify local log entry matches database states upon changes
+- [x] Hook `action-router.ts` write triggers up to notification system pipeline
+- [x] Verify local log entry matches database states upon changes
 
 ### 2.9 Chat Tests
-- [ ] Un-skip and configure all assertions inside `src/lib/chat/chat-contracts.test.ts`
-- [ ] Write targeted tests for missing payloads, ambiguous inputs, and timeline rejections
+- [x] Un-skip and configure all assertions inside `src/lib/chat/chat-contracts.test.ts`
+- [x] Write targeted tests for missing payloads, ambiguous inputs, and timeline rejections
 
 ### 2.10 UI Data Hydration
 - [x] Swap static fixture in `src/app/page.tsx` for real database `getAccount()` fetch
 - [x] Configure `debtor-portal.tsx` to refresh dataset states after chat mutations
 
 ### 2.11 End-to-End Evaluation
-- [ ] Manually test all 9 scenarios in `docs/scenarios.md` inside local UI sandbox
+- [x] Manually test all 9 scenarios in `docs/scenarios.md` inside local UI sandbox
 
 ---
 
 ## PHASE 3 — Day 3: Hardening, Deployment & Submission
 
 ### 3.1 Edge Case Pass
-- [ ] Verify system handles garbage/unsupported conversational input smoothly
-- [ ] Test text-to-integer conversion tolerances on payments
-- [ ] Verify logic forks cleanly when parsing matching duplicate names
+- [x] Verify system handles garbage/unsupported conversational input smoothly
+- [x] Test text-to-integer conversion tolerances on payments
+- [x] Verify logic forks cleanly when parsing matching duplicate names
 
 ### 3.2 Security Scrub
-- [ ] Review `git diff` carefully to guarantee zero keys or tokens are staged
-- [ ] Audit workspace for accidental tracking of `.env.local` histories
+- [x] Review `git diff` carefully to guarantee zero keys or tokens are staged
+- [x] Audit workspace for accidental tracking of `.env.local` histories
 
 ### 3.3 Remote Verification
 - [ ] Check Vercel project environment arrays match local settings
@@ -148,12 +148,12 @@
 - [ ] Surface production Vercel URL explicitly at top of `README.md`
 
 ### 3.6 Evaluation Compliance Audit
-- [ ] Check persistence durability (data survives browser refresh)
+- [x] Check persistence durability (data survives browser refresh)
 - [ ] Verify test arrays execute completely clean via `pnpm test`
-- [ ] Confirm no third-party payment gateways are hooked up
+- [x] Confirm no third-party payment gateways are hooked up
 - [ ] Confirm no text-exposed sensitive values escape via notification emails
 - [ ] Check `notification_attempts` logs entries for every structural mutation
 
 ### 3.7 Delivery Submission
-- [ ] Confirm access rights remain valid for `wardch` and `alinayevstropova`
+- [x] Confirm access rights remain valid for `wardch` and `alinayevstropova`
 - [ ] Fill out and dispatch Google Submission Form
