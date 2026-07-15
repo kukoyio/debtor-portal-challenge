@@ -9,7 +9,7 @@ import {
 } from "../account/service";
 import { addRelatedPerson } from "../related-people/service";
 import { createPromiseToPay } from "../promises/service";
-import { makePayment } from "../payments/service";
+import { listTransactions, makePayment } from "../payments/service";
 import { bookCallAppointment } from "../appointments/service";
 import { sendAccountChangeNotification } from "../notifications/account-change-notification";
 import { getRecentMessages } from "./conversation-store";
@@ -58,6 +58,7 @@ const mockGetAccount = vi.mocked(getAccount);
 const mockUpdateAccountHolder = vi.mocked(updateAccountHolder);
 const mockAddRelatedPerson = vi.mocked(addRelatedPerson);
 const mockCreatePromiseToPay = vi.mocked(createPromiseToPay);
+const mockListTransactions = vi.mocked(listTransactions);
 const mockMakePayment = vi.mocked(makePayment);
 const mockBookCallAppointment = vi.mocked(bookCallAppointment);
 const mockSendAccountChangeNotification = vi.mocked(
@@ -144,6 +145,72 @@ describe("chat action acceptance contracts", () => {
       sent: true,
       redactedRecipient: "j***@example.test",
     } as Awaited<ReturnType<typeof sendAccountChangeNotification>>);
+  });
+
+  it("retrieves the account phone number when asked (Example 1)", async () => {
+    const accountId = "acct-read-account";
+    const conversationId = "conv-read-account";
+    const message = "What is my phone number?";
+
+    mockParseIntent.mockResolvedValue({
+      action: "read_account",
+      fields: {},
+      missingFields: [],
+    } as Awaited<ReturnType<typeof parseIntent>>);
+
+    const result = await handleChatMessage({
+      accountId,
+      message,
+      conversationId,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.reply).toContain("Phone: +353871112222");
+    expect(mockGetAccount).toHaveBeenCalledWith(accountId);
+    expectConversation(conversationId, message, result.reply);
+  });
+
+  it("shows transaction history when requested (Example 7)", async () => {
+    const accountId = "acct-transactions";
+    const conversationId = "conv-transactions";
+    const message = "Show my transaction history";
+
+    mockParseIntent.mockResolvedValue({
+      action: "read_transactions",
+      fields: {},
+      missingFields: [],
+    } as Awaited<ReturnType<typeof parseIntent>>);
+    mockListTransactions.mockResolvedValue([
+      {
+        id: "txn-1",
+        transactionDate: "2026-07-01",
+        type: "payment",
+        amountCents: 1200,
+        currency: "EUR",
+        status: "posted",
+      },
+      {
+        id: "txn-2",
+        transactionDate: "2026-06-25",
+        type: "charge",
+        amountCents: 3000,
+        currency: "EUR",
+        status: "posted",
+      },
+    ] as Awaited<ReturnType<typeof listTransactions>>);
+
+    const result = await handleChatMessage({
+      accountId,
+      message,
+      conversationId,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.reply).toContain("Here is your transaction history");
+    expect(result.reply).toContain("2026-07-01");
+    expect(result.reply).toContain("payment");
+    expect(mockListTransactions).toHaveBeenCalledWith("internal-account-1");
+    expectConversation(conversationId, message, result.reply);
   });
 
   it("updates the account holder phone number and queues a redacted notification", async () => {

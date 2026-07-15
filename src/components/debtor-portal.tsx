@@ -102,6 +102,7 @@ export function DebtorPortal({ fixture }: PortalProps) {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const accountContext = normalizeLegacyFixture(fixture);
   const fullName = `${accountContext.account.accountHolderFirstName} ${accountContext.account.accountHolderLastName}`;
 
@@ -135,12 +136,17 @@ export function DebtorPortal({ fixture }: PortalProps) {
         body: JSON.stringify({
           accountId: accountContext.account.accountId,
           message: nextMessage,
-          conversationId: "starter-conversation",
+          conversationId: conversationId ?? undefined,
         }),
       });
       const body = (await response.json()) as
         | ChatResponse
         | { error?: string };
+
+      if ("conversationId" in body && typeof body.conversationId === "string") {
+        setConversationId(body.conversationId);
+      }
+
       const assistantReply =
         "message" in body
           ? body.message.content

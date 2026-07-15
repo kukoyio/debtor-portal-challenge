@@ -1,64 +1,37 @@
-# Account Self-Service Chatbot Challenge
+# Account Self-Service Chatbot
 
-Build this starter into a small but credible account self-service chatbot for a customer who owes money on an overdue account.
+This is a self-service chatbot built with Next.js, Supabase, and Resend, designed to help customers with overdue accounts safely manage their account details, set up promises to pay, make payments, and schedule appointments.
 
-The goal is to test whether you can turn everyday customer messages into safe product actions that are saved in a database. The app should feel simple, but the server-side behaviour should be clear enough that a reviewer can inspect what happened and why.
+## 🚀 Live Application
+*   **Production Deployment:** https://debtor-portal-challenge-seven.vercel.app/
 
-## Plain English terms
+---
 
-You do not need debt-collection or finance experience to complete this challenge. These terms appear throughout the brief:
+## 💻 Local Setup Instructions
 
-- **Receivables account**: money a customer owes to a business. Example: Jane missed an energy bill payment, so her energy provider has an overdue receivables account for her.
-- **Account holder**: the customer whose account this is. In the starter data, this is Jane Murphy.
-- **Creditor**: the business that is owed money. In the starter data, this is Example Energy Ireland.
-- **Overdue account**: an account where payment was due in the past and has not been fully paid.
-- **Balance**: the amount still owed.
-- **Transaction**: a record of money moving on the account, such as a charge, fee, adjustment, or payment.
-- **Promise to pay**: a customer's agreement to pay a specific amount on a future date. Example: "I can pay 500 euro on the 1st of next month."
-- **Related person**: someone the customer adds to the account, such as a spouse or sibling, who may be allowed to speak or act for them.
-- **Preferred contact method**: how the customer wants to be contacted, such as email, SMS, or phone.
-- **Persistence / persisted data**: data that is saved in the database and still exists after the page is refreshed.
-- **Fixture data**: starter sample data in JSON files. It is fake data used so the app has something to show before you connect the database.
-- **Supabase**: the database service used in this challenge. Use it to store account data so changes survive refreshes.
-- **Resend**: the email service used in this challenge. Use it to send the account-change notification email.
-- **Mocked payment**: a fake payment for this challenge. You should record it and reduce the balance, but you should not contact a real payment provider.
-- **Encrypted PDF**: a password-protected PDF attachment. In this challenge, sensitive account details should go in this PDF instead of the email body.
-- **API route**: server-side code that the frontend calls. In this starter, `/api/chat` is the backend route the chat UI calls.
-- **Notification boundary**: the place in the code where the app sends or logs the email notification. Tests should fake this part instead of sending real email but the deployed production app should send real emails.
-- **Acceptance scenario / contract test**: an example workflow the finished app should handle. The skipped tests show important behaviours you can turn into real tests.
+Follow these steps to configure and run the application on your local machine:
 
-## Start here
+### 1. Database Configuration
+This project uses Supabase for persistent data storage.
+*   Log in to your Supabase account and create a new database project.
+*   Navigate to the **SQL Editor** in your Supabase dashboard.
+*   Locate the migration files in the `supabase/migrations/` directory of this repository.
+*   Copy and run the contents of these files in the SQL Editor to set up the required table schemas and populate them with the initial synthetic user seed data[cite: 1].
 
-Create your own private copy of this repository first, then run it locally:
-
-1. On GitHub, click the green `Use this template` button.
-2. Create a new repository from this template.
-3. Set the new repository visibility to `Private`.
-4. Clone your new repository to your machine.
-5. `cd` into the repository.
-6. Run `pnpm i`.
-7. Run `pnpm dev`.
-8. Open `http://localhost:3000` in your browser, or use the next available port shown by Next.js.
-
-Useful checks:
-
-- `pnpm lint`
-- `pnpm typecheck`
-- `pnpm test`
-
-## Environment variables
-
-Copy `.env.local.example` to `.env.local` when you are ready to connect real services:
+### 2. Environment Variables
+Copy the example environment file to create your local environment configuration[cite: 1]:
 
 ```bash
 cp .env.local.example .env.local
 ```
+Fill in your specific keys in `.env.local`.
 
-The starter app runs without these values, but a complete submission will usually need:
+> **Do not commit this file to version control.**
 
-```bash
+```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-key
 
 RESEND_API_KEY=re_your_api_key
 NOTIFICATION_FROM_EMAIL=Account Portal <notifications@example.test>
@@ -67,276 +40,130 @@ NOTIFICATION_FROM_EMAIL=Account Portal <notifications@example.test>
 OPENAI_API_KEY=sk-your-openai-key
 ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
 OPENROUTER_API_KEY=sk-or-your-openrouter-key
+GEMINI_API_KEY=sk-or-your-gemini-key
 ```
 
-## Expected use of AI tools
+## 3. Install Dependencies
 
-We expect you to code with a coding assistant such as Codex, Claude Code, Cursor, or similar. Using AI tools well is part of modern software engineering.
-
-You are still responsible for the submission. You must understand the code that is produced and be able to explain the architecture, data model, tradeoffs, tests, and any AI-generated changes you accepted or rejected.
-
-## Recommended design workflow tip
-
-Before building, we recommend using Matt Pocock's `grill-with-docs` / `grill-me` style workflow to work through the problem with an LLM. We use this approach regularly because it helps the model ask questions, inspect the codebase, sharpen assumptions, and produce a better solution than trying to generate everything in one shot.
-
-- Video explanation: [Matt Pocock skill walkthrough](https://www.youtube.com/watch?v=6BB6exR8Zd8&t=651s)
-- Installation guide: [AI Hero: Skills - Grill Me](https://www.aihero.dev/skills-grill-me)
-
-## UI preview
-
-This is what the starter UI looks like before you begin extending it:
-
-![Starting Account Portal UI](./public/readme-images/ui-dashboard-start.png)
-
-## Recommended: deploy to Vercel immediately
-
-Wire up deployment before you start building so you always have a live URL to test and share.
-
-1. Create a Vercel account at [vercel.com](https://vercel.com/) if you do not already have one.
-2. In Vercel, click `Add New...` and choose `Project`.
-3. Import the GitHub repository you created from this template.
-4. Review the default settings and click `Deploy`.
-5. Once deployment finishes, use the live URL to verify the app is up.
-6. After that, every push to GitHub will automatically trigger an updated Vercel deployment.
-
-## The task
-
-Use the existing implementation in this repository as your starting point. Extend it into an account self-service chatbot where an account holder can ask questions and perform account actions through chat.
-
-A user might send messages such as:
-
-- "Can you add my brother Mark as someone who can speak for me?"
-- "What's the email address on my account?"
-- "Change my preferred contact method to SMS."
-- "Can I pay 500 euro on the 1st of next month?"
-- "Show me all my promises to pay."
-- "Pay 150 euro now."
-- "Can I book a call with an agent next Tuesday morning?"
-- "Show my previous transactions."
-- "Change Mark's phone number to +353831112233."
-
-Your chatbot should parse the request, ask for missing details where needed, apply valid changes to persistent data, and return a clear confirmation.
-
-## Recommended build path
-
-Most good submissions will follow this path:
-
-- seed Supabase from the fixture data. You can start Supabase locally on your machine with Docker if you'd like (recommended), or you can develop against a remote Supabase DB if you'd prefer.
-- replace the starter fixture read with a real account loaded from the database
-- implement `/api/chat` so messages become structured actions and fields
-- validate each action before writing account data
-- persist account, related-person, promise, payment, transaction, and call changes
-- send the notification email with encrypted PDF after data changes
-- refresh the UI from persisted account state
-- turn the skipped acceptance tests into real tests, or add equivalent coverage
-- deploy the app and document the live URL
-
-## Scope and mocking rules
-
-- Mock payments only. Do not integrate Stripe or any real payment provider.
-- You may log notification payloads locally when Resend credentials are missing.
-- The deployed app should send through Resend and attach the encrypted PDF.
-- Automated tests should mock LLM providers, Resend, PDF delivery, and payment side effects.
-- Do not commit API keys, Resend keys, Supabase service-role keys, or generated PDF passwords.
-- Do not add an authentication system, a multi-account admin dashboard, recurring payment plans, or a production-grade collections workflow.
-
-## Minimum expected behaviour
-
-### Account lookup
-
-- Read the current account holder's name, email address, phone number, postal address, preferred contact method, balance, related people, transactions, promises to pay, and future call appointments.
-- Use the fixture data in `fixtures/` as the starting account context.
-- Seed or migrate the data into Supabase so changes survive refreshes.
-
-### Update account holder details
-
-- Let the account holder update their name, email address, phone number, and postal address through chat.
-- Let the account holder read those details back through chat.
-- Validate obvious bad inputs, such as an invalid email address or an empty name.
-
-### Preferred contact method
-
-- Let the account holder read and update their preferred contact method.
-- Supported methods are `email`, `sms`, and `phone`.
-- Confirm the new preference in chat and persist it.
-
-### Related people and authorization
-
-- Let the account holder add a related person who can represent them.
-- Capture the related person's name, phone number, and email address.
-- Store whether the related person is authorized to act on the account holder's behalf.
-- Let the account holder read, update, and remove related people.
-- The chatbot should be able to edit both account-holder details and related-person details.
-
-### Promise to pay
-
-- Support one-time promises to pay in the future.
-- Capture at least amount and due date.
-- Example: "Can I pay 500 euro on the 1st of next month?"
-- Store the promise to pay in the database.
-- Let the account holder read all promises to pay.
-- Do not build multi-payment plans for this challenge.
-
-### Mock payment
-
-- Let the account holder make a mocked payment through chat.
-- Pretend payment details are already on file.
-- Confirm that the amount was deducted from their account.
-- Record the payment as a transaction.
-- Deduct the paid amount from the persisted account balance.
-- Do not call Stripe or any other real payment provider.
-
-### Transactions
-
-- Let the account holder read all previous transactions.
-- Include seeded transactions from the fixture and new mocked payments created during the chat.
-- Show useful fields such as date, amount, type, status, and description.
-
-### Call appointments
-
-- Let the account holder book a future phone call with an agent.
-- Capture date, time, phone number, and short reason where possible.
-- Let the account holder view future call appointments.
-- Reject appointment requests that are clearly in the past.
-
-### Email notification and encrypted PDF
-
-Use [Resend](https://resend.com/) for email sending. It has a free tier.
-
-Whenever the chatbot changes persisted account data, send a generic notification email to the account holder's current email address. The email body should not contain sensitive account detail. Put the sensitive detail in an encrypted PDF attachment.
-
-The PDF should include:
-
-- Account summary
-- Related people, if any
-- Transactions
-- Current contact details
-- Preferred contact method
-- Promises to pay
-- Future call appointments
-- Current balance
-
-Use the last 4 digits of the account holder's phone number as the PDF password. The starting phone number for every fixture account is `+353831234567`, so the initial PDF password is `4567`.
-
-For local development, it is acceptable to log the email payload when Resend credentials are missing, but the production/deployed app should be wired to Resend.
-
-#### Resend setup
-
-To wire real email delivery, create a Resend account, create an API key with sending access, and verify the sender domain you plan to use. For local development, copy `.env.local.example` to `.env.local` and set:
+Install the project packages using pnpm:
 
 ```bash
-RESEND_API_KEY=re_your_real_key
-NOTIFICATION_FROM_EMAIL=Account Portal <notifications@your-verified-domain.example>
+pnpm i
 ```
 
-Use a sender address that Resend is allowed to send from. For deployment, add the same variables to your hosting platform's environment variables.
+## 4. Running the App
 
-Optional setup helper: install the Resend CLI and use it with your AI coding tool while implementing the email boundary. The CLI can authenticate with `RESEND_API_KEY` from your shell or saved credentials from `resend login`, and Resend also provides an agent skill for CLI-aware coding assistants:
+Start the local development server:
 
 ```bash
-npm install -g resend-cli
-resend login
-npx skills add resend/resend-cli
+pnpm dev
 ```
 
-Do not paste real API keys into an AI chat. Put secrets in `.env.local` for local development and in your deployment platform's environment variables for production, then ask your coding assistant to implement `sendAccountChangeNotification` using `RESEND_API_KEY`, `NOTIFICATION_FROM_EMAIL`, and mocked tests around the notification boundary.
+## 5. Running Tests
 
-For tests, mock the notification boundary. Do not make automated tests depend on live Resend delivery or real inbox inspection. Reviewers should be able to verify from code and logs that production sends through Resend and attaches the encrypted PDF.
+The core logic and offline validation checks can be run without network access:
 
-## LLM guidance
+```bash
+pnpm test
+```
 
-You should use an LLM to parse free-text messages into structured actions and fields. This is one of the most useful parts of the exercise: the system needs to infer intent and extract details from messy incoming text before applying controlled business logic.
+## Verification Matrix
 
-You can use your own API key from a provider such as OpenAI, Anthropic, OpenRouter, or another model service. Do not commit API keys or secrets to the repository.
+| Example # | User Input Example | Intent / Action Parsed | Implementation Location | Automated Test Location |
+| --- | --- | --- | --- | --- |
+| 1 | “What phone number is on my account?” | `read_account` | Router branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts) calling `getAccount` from [src/lib/account/service.ts](src/lib/account/service.ts). | Test block: “retrieves the account phone number when asked” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 2 | “Change my phone number to +353831112233.” | `update_account_holder` | Router branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts), validated by `validateUpdateAccountHolder` in [src/lib/chat/validators.ts](src/lib/chat/validators.ts), then written by `updateAccountHolder` in [src/lib/account/service.ts](src/lib/account/service.ts). | Test block: “updates the account holder phone number and queues a redacted notification” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 3 | “Add Mark Murphy, mark@example.test, +353831998877 so he can act for me.” | `add_related_person` | Router branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts), validated by `validateAddRelatedPerson` in [src/lib/chat/validators.ts](src/lib/chat/validators.ts), then persisted by `addRelatedPerson` in [src/lib/related-people/service.ts](src/lib/related-people/service.ts). | Test block: “adds an authorized related person with name, email, and phone” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 4 | “Add my brother so he can speak for me.” | `clarify` | Router `clarify` branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts), with intent guidance from [src/lib/chat/intent-parser.ts](src/lib/chat/intent-parser.ts). | Test block: “returns a clarify result without calling any service when fields are missing” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 5 | “Can I pay 500 euro on the 1st of next month?” | `create_promise_to_pay` | Router branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts), validated by `validateCreatePromiseToPay` in [src/lib/chat/validators.ts](src/lib/chat/validators.ts), then stored by `createPromiseToPay` in [src/lib/promises/service.ts](src/lib/promises/service.ts). | Test block: “records a one-time promise to pay with amount and future due date” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 6 | “Pay 150 euro now.” | `mock_payment` | Router branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts), validated by `validateMockPayment` in [src/lib/chat/validators.ts](src/lib/chat/validators.ts), then executed by `makePayment` in [src/lib/payments/service.ts](src/lib/payments/service.ts). | Test block: “records a mocked payment transaction and surfaces payment failures” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 7 | “Show my transactions.” | `read_transactions` | Router branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts) calling `listTransactions` in [src/lib/payments/service.ts](src/lib/payments/service.ts). | Test block: “shows transaction history when requested” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 8 | “Book a call next Tuesday at 10am about my bill.” | `book_call_appointment` | Router branch in [src/lib/chat/action-router.ts](src/lib/chat/action-router.ts), validated by `validateBookCallAppointment` in [src/lib/chat/validators.ts](src/lib/chat/validators.ts), then written by `bookCallAppointment` in [src/lib/appointments/service.ts](src/lib/appointments/service.ts). | Test block: “books a future call appointment and rejects dates in the past” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
+| 9 | “Book a call yesterday.” | `book_call_appointment` | Same router/service path as Example 8, but the validation path rejects the past date before the service is invoked. | Test block: “books a future call appointment and rejects dates in the past” in [src/lib/chat/chat-contracts.test.ts](src/lib/chat/chat-contracts.test.ts). |
 
-Good enough is structured extraction plus deterministic validation. Prefer a small parser that turns a customer message into an intent and fields, followed by explicit validation and business logic. You do not need to build a fully autonomous agent framework.
+## Design Notes
 
-A rule-based action router, structured form fallback, or hybrid approach is also fine. What matters is that the system:
+### 1. System Architecture & Data Flow
 
-- handles the required workflows
-- asks for missing information instead of guessing dangerous details
-- keeps state transitions understandable and testable
-- has sensible fallback behaviour for ambiguous messages
-- avoids exposing sensitive data in email bodies or logs
+This application uses a clean three-layer architecture to ensure the AI never has direct access to the database.
 
-## Technical notes
+#### UI Layer
+A Next.js dashboard reads and displays data directly from Supabase.
 
-- Build on this repository rather than starting from scratch.
-- Use Supabase so changed account data survives refreshes.
-- Start from `supabase/migrations/`, which includes a minimal table outline and seeded Jane Murphy account data.
-- You may change the schema, but document the final shape and tradeoffs in your design note.
-- Treat account data as sensitive. Do not log full account summaries, PDF passwords, or sensitive PDF contents.
-- Keep the core logic understandable and testable. Small services for parsing, validation, database writes, mocked payment, appointments, and notifications are usually enough.
+#### Brain Layer
+The `/api/chat` route processes incoming messages. Gemini 1.5 Flash translates the user's natural language into a structured action (for example, `mock_payment`).
 
-Useful Supabase references:
+#### Validation & Service Layer
+Before anything reaches Supabase, plain TypeScript code using Zod schemas strictly validates the data. If validation succeeds, the appropriate service performs the database update.
 
-- [Supabase Next.js quickstart](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
-- [Supabase local development](https://supabase.com/docs/guides/local-development)
-- [Supabase database migrations](https://supabase.com/docs/guides/deployment/database-migrations)
+#### Notification System
+Every successful data change triggers a background task that generates an encrypted PDF using a custom `pdfkit` build and sends it via Resend.
 
-## Example acceptance scenarios
+---
 
-Your submission should handle these flows end to end. See `docs/scenarios.md` for more detail.
+### 2. Key Decisions & Trade-offs
 
-The repository includes skipped examples in `src/lib/chat/chat-contracts.test.ts`. Turn those into real tests or add equivalent coverage for your own action router.
+#### Gemini 1.5 Flash over OpenAI (ADR-002)
 
-1. User asks, "What phone number is on my account?" Chatbot returns the current phone number.
-2. User asks, "Change my phone number to +353831112233." Chatbot updates the database, confirms the change, and sends the notification email with encrypted PDF.
-3. User asks, "Add Mark Murphy, mark@example.test, +353831998877 so he can act for me." Chatbot creates an authorized related person and sends the notification email with encrypted PDF.
-4. User asks, "Can I pay 500 euro on the 1st of next month?" Chatbot records a one-time promise to pay with amount and date.
-5. User asks, "Show my promises to pay." Chatbot lists stored promises.
-6. User asks, "Pay 150 euro now." Chatbot records a mocked payment transaction and reduces the account balance.
-7. User asks, "Show my transactions." Chatbot lists seeded and newly created transactions.
-8. User asks, "Book a call next Tuesday at 10am about my bill." Chatbot schedules a future call appointment.
-9. User asks, "What calls do I have booked?" Chatbot lists future call appointments.
+Gemini was chosen because of its generous free tier and fast response times. Since it can occasionally struggle to produce strictly formatted JSON, defensive fallback logic was implemented to maintain system stability.
 
-## Deliverables
+#### PDFKit Standalone (ADR-003)
 
-Submit:
+Many PDF libraries either lack password protection or have font compatibility issues when bundled by Next.js. Using the standalone build of `pdfkit` solved both problems.
 
-- source code in this repository
-- setup instructions
-- a deployed version of the application, with the live URL linked from `README.md`
-- an updated `README.md` with a short design note of no more than 800 words covering architecture, tradeoffs, assumptions, and how you would improve, monitor, and evolve the system over time
-- an architecture diagram saved in the repo root as `architecture-diagram.png`, `architecture-diagram.pdf`, or `architecture-diagram.md`
-- tests for the core decision/action logic
+#### In-Memory Chat History (ADR-006)
 
-When you are finished, invite `wardch` as a collaborator so the submission can be reviewed. Your `README.md` should link to the deployed application and architecture diagram, explain how the system works, and answer: how can you improve and monitor this system over time?
+Account data is stored securely in Supabase, while chat history is stored temporarily in server memory. This approach is lightweight and suited the project's scope, although conversation history is lost when the server restarts.
 
-## What we're evaluating
+#### No Pre-Payment Confirmations (ADR-005)
 
-- product and engineering judgment
-- safe handling of account data
-- quality of chat intent/action handling
-- quality of database design and persistence
-- quality of validation and error handling
-- mocked payment correctness, including balance deduction and transaction history
-- email/PDF notification implementation
-- handling of ambiguous input and missing details
-- code quality and structure
-- test quality
-- clarity of explanation
-- quality of the suggested iteration path over time
+Because payments are simulated and no real funds are transferred, confirmation prompts were intentionally omitted. Instead, an immediate notification email acts as the confirmation record.
 
-Hard failure cases:
+---
 
-- no persistence for changed account data
-- no tests for core decision/action logic
-- real payment provider integration instead of mocked payment
-- sensitive account detail in the email body
-- account data changes with no notification attempt
-- deployed submission cannot send through Resend with an encrypted PDF attachment
-- broad rewrites that discard the starter UI instead of building on it
+### 3. Handling Failures & LLM Quirks
 
-## Project structure
+#### Handling Multi-Field Extraction Failures
 
-- `src/app/page.tsx` wires the standard fixture into the main portal UI.
-- `src/components/debtor-portal.tsx` contains the current dashboard and chat UI.
-- `src/app/api/chat/route.ts` marks the backend chat route candidates should implement.
-- `src/lib/account/types.ts` and `src/lib/chat/types.ts` define the starter contracts.
-- `src/lib/notifications/account-change-notification.ts` marks the notification side-effect candidates should implement.
-- `supabase/migrations/` contains the starter database schema and seed data.
-- `docs/account-context.md` explains fixture fields and mutability.
-- `docs/scenarios.md` gives acceptance-flow examples.
-- `src/lib/supabase/client.ts` provides a browser client factory for later integration.
-- `fixtures/` contains the provided account data.
+During testing, a recurring issue was observed: when users supplied multiple details in a single message (such as a name, email address, and phone number), the LLM would occasionally omit one of the fields.
+
+##### Solution
+
+A custom fallback parser was implemented. If the LLM fails to extract an email address or phone number, regular expressions automatically recover the missing values from the original message before validation.
+
+If required fields are still missing after this step, Zod validation stops the request and prompts the user for the missing information.
+
+#### Resilient Notifications
+
+If Resend is unavailable or PDF generation fails, database updates are **not** rolled back. Instead, the notification result is recorded in the `notification_attempts` table with a status such as `sent`, `failed`, or `logged`. This ensures notification failures never prevent legitimate account updates.
+
+#### Atomic Balances (ADR-007)
+
+Account balances are prevented from becoming negative. Any payment that exceeds the available balance is rejected during validation rather than silently reducing the balance to zero.
+
+---
+
+### 4. Security & Privacy
+
+#### Trust Boundaries (ADR-014)
+
+The frontend never performs database writes. The server resolves the internal account ID once and passes it securely to the service layer.
+
+#### No Raw PII in Logs (ADR-013)
+
+Sensitive information is never exposed in logs or error reports. All values returned by the notification service redact email addresses (for example, `m***@example.test`).
+
+#### PDF Password Protection (ADR-012)
+
+Sensitive financial information is never included in the email body. Instead, it is contained within an attached PDF encrypted using the last four digits of the account holder's registered phone number.
+
+---
+
+### 5. Next Steps for Production
+
+If this system were being prepared for production, the highest-priority improvements would include:
+
+- **Redis-backed chat history:** Move chat history from server memory to a persistent data store so conversations survive server restarts.
+- **Notification retry queue:** Add a background worker to automatically retry failed email deliveries caused by temporary network issues.
+- **Strict ID unification (ADR-015):** Standardize internal database service interfaces so all services use the same ID conventions.
+- **Verified email domain:** Replace the Resend sandbox domain with a fully authenticated production domain.
