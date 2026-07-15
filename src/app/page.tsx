@@ -20,5 +20,5 @@ export default async function Home() {
     callAppointments: liveAccount.callAppointments,
     notificationRules: liveAccount.notificationRules,
   };
-  return <DebtorPortal fixture={legacyFixtureData as any} />;
+  return <DebtorPortal fixture={legacyFixtureData} />;
 }
