@@ -237,3 +237,16 @@ export async function updatePreferredContactMethod(
 
   return mapAccountHolderRow(updated);
 }
+
+export async function getInternalAccountId(accountId: string): Promise<string> {
+    const { data, error } = await supabaseServer
+        .from('account_holders')
+        .select('id')
+        .eq('account_id', accountId)
+        .single();
+
+    if (error || !data) {
+        throw new Error("Account with identifier ${accountId} could not be found.");
+    }
+    return data.id;
+}

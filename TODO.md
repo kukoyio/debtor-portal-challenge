@@ -96,12 +96,12 @@
 - [x] Build in-memory message history container using a JavaScript `Map`
 
 ### 2.5 Core Routing Engine (`src/lib/chat/action-router.ts`)
-- [ ] Create `handleChatMessage()` central routing workflow
-- [ ] Sequence pipeline: Store → Parse → Clarify Check → Validate → DB Write → Notify → Respond
+- [x] Create `handleChatMessage()` central routing workflow
+- [x] Sequence pipeline: Store → Parse → Clarify Check → Validate → DB Write → Notify → Respond
 
 ### 2.6 Edge API Hook (`src/app/api/chat/route.ts`)
-- [ ] Replace route stub with live `handleChatMessage()` call
-- [ ] Build global server try/catch wrapper returning error status 500
+- [x] Replace route stub with live `handleChatMessage()` call
+- [x] Build global server try/catch wrapper returning error status 500
 
 ### 2.7 Notification Architecture
 - [x] Implement password-encrypted PDF generator via `pdfkit` (`src/lib/notifications/pdf.ts`)
@@ -117,8 +117,8 @@
 - [ ] Write targeted tests for missing payloads, ambiguous inputs, and timeline rejections
 
 ### 2.10 UI Data Hydration
-- [ ] Swap static fixture in `src/app/page.tsx` for real database `getAccount()` fetch
-- [ ] Configure `debtor-portal.tsx` to refresh dataset states after chat mutations
+- [x] Swap static fixture in `src/app/page.tsx` for real database `getAccount()` fetch
+- [x] Configure `debtor-portal.tsx` to refresh dataset states after chat mutations
 
 ### 2.11 End-to-End Evaluation
 - [ ] Manually test all 9 scenarios in `docs/scenarios.md` inside local UI sandbox
