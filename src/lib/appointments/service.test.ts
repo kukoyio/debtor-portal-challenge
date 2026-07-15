@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { listFutureCallAppointments, bookCallAppointment } from "./service"; // Adjust if path differs
 import { validatePhone } from "../account/validators";
 
-let mockDbData: any = null;
-let mockDbError: any = null;
+type MockDbRow = unknown | null;
+let mockDbData: MockDbRow = null;
+let mockDbError: { message: string } | null = null;
 
 const mockChain = {
   select: vi.fn().mockReturnThis(),

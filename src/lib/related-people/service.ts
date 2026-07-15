@@ -2,8 +2,17 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { RelatedPerson } from '@/lib/account/types';
 import { validateName, validateEmail, validatePhone } from '@/lib/account/validators';
 
+type SupabaseRelatedPersonRow = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    relationship?: string | null;
+    authorized_to_act: boolean;
+};
+
 // Converts a raw Supabase row into the app's RelatedPerson shape.
-function mapRelatedPersonRow(row: any): RelatedPerson {
+function mapRelatedPersonRow(row: SupabaseRelatedPersonRow): RelatedPerson {
     return {
         id: row.id,
         name: row.name,
@@ -72,7 +81,7 @@ export async function updateRelatedPerson(
         authorizedToAct: boolean;
     }>
 ): Promise<RelatedPerson> {
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: Record<string, string | boolean | null> = {};
 
     if (fields.name !== undefined) {
         if (!validateName(fields.name)) throw new Error("Name cannot be empty.");

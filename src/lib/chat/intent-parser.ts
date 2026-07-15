@@ -89,8 +89,10 @@ listed are ignored even if present in "fields".
 - mock_payment — required: amountCents (integer, e.g. "150 euro" means 15000).
 - read_transactions — no fields.
 - book_call_appointment — required: scheduledAt (full ISO 8601 datetime,
-  resolved from relative phrases using CURRENT DATE AND TIME above), phone.
-  Optional: reason.
+  resolved from relative phrases using CURRENT DATE AND TIME above).
+  Optional: phone (only include if the user explicitly states a phone
+  number for this call — do NOT ask for it or treat it as missing; the
+  system will fall back to the phone number already on file), reason.
 - read_call_appointments — no fields.
 
 ===== ROUTING LOGIC =====
@@ -127,7 +129,10 @@ User: "Pay 150 euro now."
 → {"action": "mock_payment", "fields": {"amountCents": 15000}, "missingFields": []}
 
 User: "Can I book a call?"
-→ {"action": "clarify", "fields": {}, "missingFields": ["scheduledAt", "phone"]}
+→ {"action": "clarify", "fields": {}, "missingFields": ["scheduledAt"]}
+
+User: "Book a call next Tuesday at 10am about my bill."
+→ {"action": "book_call_appointment", "fields": {"scheduledAt": "2026-07-21T10:00:00.000Z", "reason": "about my bill"}, "missingFields": []}
 
 User: "What's the weather like today?"
 → {"action": "unsupported", "fields": {}, "missingFields": []}
@@ -183,10 +188,10 @@ export async function parseIntent(
           contents: conversationContents,
           config: {
             systemInstruction: buildSystemPrompt(currentDateIso),
-            temperature: 0.3, 
+            temperature: 0,
             maxOutputTokens: 2048,
             thinkingConfig: {
-              thinkingLevel: ThinkingLevel.LOW
+              thinkingLevel: ThinkingLevel.MEDIUM,
             },
             responseMimeType: "application/json",
             responseSchema: {

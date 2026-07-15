@@ -194,10 +194,7 @@ export async function handleChatMessage(
             };
             break;
           }
-          const updated = await updateAccountHolder(
-            request.accountId,
-            check.fields,
-          );
+          await updateAccountHolder(request.accountId, check.fields);
           await notifyAfterChange(
             request.accountId,
             internalAccountId,
@@ -285,7 +282,11 @@ export async function handleChatMessage(
             result = resolved;
             break;
           }
-          const { personName, ...updateFields } = check.fields;
+          const updateFields = Object.fromEntries(
+            Object.entries(check.fields).filter(
+              ([key]) => key !== "personName",
+            ),
+          ) as Omit<typeof check.fields, "personName">;
           const updated = await updateRelatedPerson(
             internalAccountId,
             resolved.id,
@@ -501,10 +502,20 @@ export async function handleChatMessage(
             break;
           }
           try {
-            const appointment = await bookCallAppointment(
-              internalAccountId,
-              check.fields,
-            );
+            // Phone is optional in the request — customers already have a
+            // number on file, mirroring how mock_payment assumes payment
+            // details are on file. Only fall back when the user didn't
+            // explicitly give a different number for this call.
+            let phoneForCall = check.fields.phone;
+            if (!phoneForCall) {
+              const account = await getAccount(request.accountId);
+              phoneForCall = account.account.phone;
+            }
+
+            const appointment = await bookCallAppointment(internalAccountId, {
+              ...check.fields,
+              phone: phoneForCall,
+            });
             await notifyAfterChange(
               request.accountId,
               internalAccountId,

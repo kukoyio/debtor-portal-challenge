@@ -15,8 +15,39 @@ import {
   validatePhone,
 } from "./validators";
 
+type SupabaseAccountRow = {
+  account_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address_line1: string;
+  address_line2?: string | null;
+  city: string;
+  postal_code: string;
+  country: string;
+  preferred_contact_method: ContactMethod;
+  reference: string;
+  creditor_name: string;
+  currency: string;
+  balance_cents: number;
+  status: string;
+  days_past_due: number;
+  minimum_payment_cents: number;
+  last_payment_date: string | null;
+  last_payment_amount_cents: number | null;
+  billing_due_date?: string | null;
+  support_phone?: string | null;
+  support_email?: string | null;
+  last_statement_amount_cents?: number | null;
+  related_people?: Array<Record<string, unknown>>;
+  promises_to_pay?: Array<Record<string, unknown>>;
+  transactions?: Array<Record<string, unknown>>;
+  call_appointments?: Array<Record<string, unknown>>;
+};
+
 // Converts a raw Supabase row (snake_case columns) into the app's AccountHolder shape (camelCase).
-function mapAccountHolderRow(account: any): AccountHolder {
+function mapAccountHolderRow(account: SupabaseAccountRow): AccountHolder {
   return {
     accountId: account.account_id,
     accountHolderFirstName: account.first_name,
@@ -39,7 +70,7 @@ function mapAccountHolderRow(account: any): AccountHolder {
     daysPastDue: account.days_past_due,
     minimumPaymentCents: account.minimum_payment_cents,
     lastPaymentDate: account.last_payment_date,
-    lastPaymentAmountCents: account.last_payment_amount_cents,
+    lastPaymentAmountCents: account.last_payment_amount_cents ?? 0,
   };
 }
 
@@ -69,7 +100,7 @@ export async function getAccount(accountId: string): Promise<AccountContext> {
   // Map child relations using safe array fallbacks
   const mappedRelatedPeople: RelatedPerson[] = (
     account.related_people || []
-  ).map((p: any) => ({
+  ).map((p: Record<string, unknown>) => ({
     id: p.id,
     name: p.name,
     email: p.email,
@@ -80,7 +111,7 @@ export async function getAccount(accountId: string): Promise<AccountContext> {
 
   const mappedPromisesToPay: PromiseToPay[] = (
     account.promises_to_pay || []
-  ).map((p: any) => ({
+  ).map((p: Record<string, unknown>) => ({
     id: p.id,
     amountCents: p.amount_cents,
     currency: p.currency,
@@ -90,7 +121,7 @@ export async function getAccount(accountId: string): Promise<AccountContext> {
   }));
 
   const mappedTransactions: Transaction[] = (account.transactions || []).map(
-    (t: any) => ({
+    (t: Record<string, unknown>) => ({
       id: t.id,
       type: t.type as "payment" | "charge" | "fee" | "adjustment",
       status: t.status as "completed" | "pending" | "failed" | "posted",
@@ -103,7 +134,7 @@ export async function getAccount(accountId: string): Promise<AccountContext> {
 
   const mappedCallAppointments: CallAppointment[] = (
     account.call_appointments || []
-  ).map((c: any) => ({
+  ).map((c: Record<string, unknown>) => ({
     id: c.id,
     scheduledAt: c.scheduled_at,
     phone: c.phone,
@@ -156,7 +187,7 @@ export async function updateAccountHolder(
     address: Partial<AccountHolder["address"]>;
   }>,
 ): Promise<AccountHolder> {
-  const updatePayload: Record<string, any> = {};
+  const updatePayload: Record<string, string | null | Partial<AccountHolder["address"]>> = {};
 
   if (fields.firstName !== undefined) {
     if (!validateName(fields.firstName))
@@ -246,7 +277,7 @@ export async function getInternalAccountId(accountId: string): Promise<string> {
         .single();
 
     if (error || !data) {
-        throw new Error("Account with identifier ${accountId} could not be found.");
+        throw new Error(`Account with identifier ${accountId} could not be found.`);
     }
-    return data.id;
+    return (data as { id: string }).id;
 }

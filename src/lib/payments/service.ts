@@ -1,8 +1,18 @@
 import { Transaction } from "../account/types";
 import { supabaseServer } from "../supabase/server";
 
+type SupabaseTransactionRow = {
+  id: string;
+  type: "payment" | "charge" | "fee" | "adjustment";
+  status: "completed" | "pending" | "failed" | "posted";
+  amount_cents: number;
+  currency: string;
+  description: string;
+  transaction_date: string;
+};
+
 // Converts a raw Supabase row into the app's Transaction shape.
-function mapTransactionRow(row: any): Transaction {
+function mapTransactionRow(row: SupabaseTransactionRow): Transaction {
   return {
     id: row.id,
     type: row.type as "payment" | "charge" | "fee" | "adjustment",

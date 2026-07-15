@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { AccountContext, AccountHolder, PromiseToPay } from "../account/types";
 import { handleChatMessage } from "./action-router";
 import { parseIntent } from "./intent-parser";
 import {
@@ -63,9 +64,12 @@ const mockSendAccountChangeNotification = vi.mocked(
   sendAccountChangeNotification,
 );
 
-function buildAccountSnapshot() {
+function buildAccountSnapshot(): AccountContext {
   return {
     account: {
+      accountId: "acct-001",
+      accountHolderFirstName: "Person",
+      accountHolderLastName: "Example",
       status: "active",
       balanceCents: 100000,
       currency: "EUR",
@@ -78,6 +82,37 @@ function buildAccountSnapshot() {
         postalCode: "D01",
         country: "Ireland",
       },
+      reference: "REF-001",
+      creditorName: "Example Creditor",
+      daysPastDue: 0,
+      minimumPaymentCents: 1000,
+      lastPaymentDate: null,
+      lastPaymentAmountCents: 0,
+    },
+    billing: {
+      currentAmountCents: 100000,
+      lastStatementAmountCents: 100000,
+      dueDate: "2026-07-15",
+    },
+    paymentOptions: {
+      payNowEnabled: true,
+      promiseToPayEnabled: true,
+      mockPaymentsEnabled: true,
+      arrangementEnabled: false,
+      eligibleArrangementOptions: [],
+    },
+    support: {
+      humanSupportAvailable: true,
+      supportPhone: "+35318000000",
+      supportEmail: "support@example.test",
+    },
+    relatedPeople: [],
+    promisesToPay: [],
+    transactions: [],
+    callAppointments: [],
+    notificationRules: {
+      sendEmailOnDataChange: true,
+      pdfPasswordSource: "account_phone_last4",
     },
   };
 }
@@ -103,12 +138,12 @@ describe("chat action acceptance contracts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetInternalAccountId.mockResolvedValue("internal-account-1");
-    mockGetAccount.mockResolvedValue(buildAccountSnapshot() as any);
+    mockGetAccount.mockResolvedValue(buildAccountSnapshot());
     mockSendAccountChangeNotification.mockResolvedValue({
       notificationId: "notif-001",
       sent: true,
       redactedRecipient: "j***@example.test",
-    } as any);
+    } as Awaited<ReturnType<typeof sendAccountChangeNotification>>);
   });
 
   it("updates the account holder phone number and queues a redacted notification", async () => {
@@ -120,11 +155,30 @@ describe("chat action acceptance contracts", () => {
       action: "update_account_holder",
       fields: { phone: "+353871112222" },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
     mockUpdateAccountHolder.mockResolvedValue({
-      id: "holder-1",
+      accountId: "acct-001",
+      accountHolderFirstName: "Person",
+      accountHolderLastName: "Example",
+      email: "person@example.test",
       phone: "+353871112222",
-    } as any);
+      address: {
+        line1: "1 Main Street",
+        city: "Dublin",
+        postalCode: "D01",
+        country: "Ireland",
+      },
+      preferredContactMethod: "sms",
+      reference: "REF-001",
+      creditorName: "Example Creditor",
+      currency: "EUR",
+      balanceCents: 100000,
+      status: "active",
+      daysPastDue: 0,
+      minimumPaymentCents: 1000,
+      lastPaymentDate: null,
+      lastPaymentAmountCents: 0,
+    } as AccountHolder);
 
     const result = await handleChatMessage({
       accountId,
@@ -146,7 +200,7 @@ describe("chat action acceptance contracts", () => {
     );
 
     const notificationResult = (await mockSendAccountChangeNotification.mock
-      .results[0].value) as any;
+      .results[0].value) as Awaited<ReturnType<typeof sendAccountChangeNotification>>;
     expect(notificationResult.redactedRecipient).toContain("***");
     expect(notificationResult.redactedRecipient).not.toContain(
       "person@example.test",
@@ -170,7 +224,7 @@ describe("chat action acceptance contracts", () => {
         authorizedToAct: true,
       },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
     mockAddRelatedPerson.mockResolvedValue({
       id: "rel-1",
       name: "Jamie Doe",
@@ -178,7 +232,7 @@ describe("chat action acceptance contracts", () => {
       phone: "+353871112222",
       authorizedToAct: true,
       relationship: "friend",
-    } as any);
+    } as Awaited<ReturnType<typeof addRelatedPerson>>);
 
     const result = await handleChatMessage({
       accountId,
@@ -198,7 +252,7 @@ describe("chat action acceptance contracts", () => {
     );
 
     const createdPerson = (await mockAddRelatedPerson.mock.results[0]
-      .value) as any;
+      .value) as Awaited<ReturnType<typeof addRelatedPerson>>;
     expect(createdPerson).toMatchObject({ authorizedToAct: true });
 
     expectConversation(conversationId, message, result.reply);
@@ -214,14 +268,15 @@ describe("chat action acceptance contracts", () => {
       action: "create_promise_to_pay",
       fields: { amountCents: 50000, dueDate: futureDueDate },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
     mockCreatePromiseToPay.mockResolvedValue({
       id: "promise-1",
       amountCents: 50000,
       currency: "EUR",
       dueDate: futureDueDate,
-      status: "pending",
-    } as any);
+      status: "active",
+      createdAt: "2026-07-15T00:00:00.000Z",
+    } as PromiseToPay);
 
     const result = await handleChatMessage({
       accountId,
@@ -251,7 +306,7 @@ describe("chat action acceptance contracts", () => {
       action: "mock_payment",
       fields: { amountCents: 15000 },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
     mockMakePayment.mockResolvedValue({
       transaction: {
         id: "txn-1",
@@ -259,7 +314,7 @@ describe("chat action acceptance contracts", () => {
         currency: "EUR",
       },
       newBalanceCents: 85000,
-    } as any);
+    } as Awaited<ReturnType<typeof makePayment>>);
 
     const successResult = await handleChatMessage({
       accountId: successAccountId,
@@ -290,7 +345,7 @@ describe("chat action acceptance contracts", () => {
       action: "mock_payment",
       fields: { amountCents: 500000 },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
     mockMakePayment.mockRejectedValueOnce(
       new Error("Payment amount exceeds current balance."),
     );
@@ -322,14 +377,14 @@ describe("chat action acceptance contracts", () => {
       action: "book_call_appointment",
       fields: { scheduledAt: futureScheduledAt, phone: "+353871112222" },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
     mockBookCallAppointment.mockResolvedValue({
       id: "appt-1",
       scheduledAt: futureScheduledAt,
       phone: "+353871112222",
       reason: "General Account Discussion",
       status: "scheduled",
-    } as any);
+    } as Awaited<ReturnType<typeof bookCallAppointment>>);
 
     const successResult = await handleChatMessage({
       accountId: successAccountId,
@@ -368,7 +423,7 @@ describe("chat action acceptance contracts", () => {
         phone: "+353871112222",
       },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
     mockBookCallAppointment.mockRejectedValueOnce(
       new Error("Cannot book a call in the past."),
     );
@@ -397,7 +452,7 @@ describe("chat action acceptance contracts", () => {
       action: "clarify",
       fields: {},
       missingFields: ["scheduledAt", "phone"],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
 
     const result = await handleChatMessage({
       accountId: "acct-clarify",
@@ -416,7 +471,7 @@ describe("chat action acceptance contracts", () => {
       action: "update_account_holder",
       fields: { email: "not-an-email" },
       missingFields: [],
-    } as any);
+    } as Awaited<ReturnType<typeof parseIntent>>);
 
     const result = await handleChatMessage({
       accountId: "acct-invalid",

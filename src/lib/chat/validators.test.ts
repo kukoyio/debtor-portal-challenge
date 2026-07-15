@@ -204,7 +204,6 @@ describe("Chat Validators", () => {
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.missingFields).toContain("scheduledAt");
-        expect(result.missingFields).toContain("phone");
       }
     });
   });

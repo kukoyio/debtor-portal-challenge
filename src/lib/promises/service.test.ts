@@ -2,11 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { listPromisesToPay, createPromiseToPay } from "./service";
 
 // MOCKING SUPABASE
-let mockDbData: any = null;
-let mockDbError: any = null;
+type MockDbRow = unknown | null;
+let mockDbData: MockDbRow = null;
+let mockDbError: { message: string } | null = null;
 
-let mockCurrencyData: any = { currency: "EUR" };
-let mockCurrencyError: any = null;
+let mockCurrencyData: { currency: string } | null = { currency: "EUR" };
+let mockCurrencyError: { message: string } | null = null;
 let currentTable: string | null = null;
 
 const mockChain = {

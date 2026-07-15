@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { listTransactions, makePayment } from "./service";
 
 // Variables to control what the mock database returns in each test
-let mockDbData: any = null;
-let mockDbError: any = null;
+type MockDbRow = unknown | null;
+let mockDbData: MockDbRow = null;
+let mockDbError: { message: string } | null = null;
 
 // The chainable mock object
 const mockChain = {
@@ -119,7 +120,7 @@ describe("Transaction Service", () => {
         data: mockTransactionRow,
         error: null,
       });
-      mockChain.then.mockImplementationOnce((resolve: any) =>
+      mockChain.then.mockImplementationOnce((resolve: (value: { data: null; error: { message: string } | null }) => unknown) =>
         resolve({ data: null, error: { message: "Update failed" } }),
       );
       await expect(makePayment("acc_uuid_01", 1000)).rejects.toThrow(
@@ -136,7 +137,7 @@ describe("Transaction Service", () => {
         data: mockTransactionRow,
         error: null,
       });
-      mockChain.then.mockImplementationOnce((resolve: any) =>
+      mockChain.then.mockImplementationOnce((resolve: (value: { data: null; error: null }) => unknown) =>
         resolve({ data: null, error: null }),
       );
       const result = await makePayment("acc_uuid_01", 1000);

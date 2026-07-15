@@ -2,8 +2,16 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { CallAppointment } from "@/lib/account/types";
 import { validatePhone } from "../account/validators";
 
+type SupabaseCallAppointmentRow = {
+  id: string;
+  scheduled_at: string;
+  phone: string;
+  reason?: string | null;
+  status: "scheduled" | "cancelled" | "completed";
+};
+
 // Converts a raw Supabase row into the app's CallAppointment shape.
-function mapCallAppointmentRow(row: any): CallAppointment {
+function mapCallAppointmentRow(row: SupabaseCallAppointmentRow): CallAppointment {
   return {
     id: row.id,
     scheduledAt: row.scheduled_at,

@@ -1,8 +1,17 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { PromiseToPay } from "@/lib/account/types";
 
+type SupabasePromiseRow = {
+  id: string;
+  amount_cents: number;
+  currency: string;
+  due_date: string;
+  status: "active" | "completed" | "cancelled" | "missed";
+  created_at: string;
+};
+
 // Converts a raw Supabase row into the app's PromiseToPay shape.
-function mapPromiseToPayRow(row: any): PromiseToPay {
+function mapPromiseToPayRow(row: SupabasePromiseRow): PromiseToPay {
   return {
     id: row.id,
     amountCents: row.amount_cents,

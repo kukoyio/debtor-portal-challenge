@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getAccount, updateAccountHolder, updatePreferredContactMethod } from './service';
 
-let mockDbData: any = null;
-let mockDbError: any = null;
+type MockDbRow = Record<string, unknown> | null;
+let mockDbData: MockDbRow = null;
+let mockDbError: { message: string } | null = null;
 
 const mockChain = {
     select: vi.fn().mockReturnThis(),

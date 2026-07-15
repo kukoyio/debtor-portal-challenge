@@ -8,8 +8,9 @@ import {
 } from './service';
 
 
-let mockDbData: any = null;
-let mockDbError: any = null;
+type MockDbRow = unknown | null;
+let mockDbData: MockDbRow = null;
+let mockDbError: { message: string } | null = null;
 
 const mockChain = {
     select: vi.fn().mockReturnThis(),

@@ -55,7 +55,7 @@ const UpdateAccountHolderSchema = z
 
 const UpdatePreferredContactMethodSchema = z.object({
   contactMethod: z.enum(["email", "sms", "phone"], {
-      message: "Preferred contact method must be 'email', 'sms', or 'phone'.",
+    message: "Preferred contact method must be 'email', 'sms', or 'phone'.",
   }),
 });
 
@@ -98,16 +98,15 @@ const RemoveRelatedPersonSchema = z.object({
 });
 
 // Future-date business rule intentionally lives in promises/service.ts,
-const CreatePromiseToPaySchema = z
-  .object({
-    amountCents: z.coerce
-      .number()
-      .int()
-      .positive("Amount must be a positive number of cents."),
-    dueDate: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Due date must match YYYY-MM-DD format."),
-  });
+const CreatePromiseToPaySchema = z.object({
+  amountCents: z.coerce
+    .number()
+    .int()
+    .positive("Amount must be a positive number of cents."),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Due date must match YYYY-MM-DD format."),
+});
 
 const MockPaymentSchema = z.object({
   amountCents: z.coerce
@@ -118,12 +117,10 @@ const MockPaymentSchema = z.object({
 
 const BookCallAppointmentSchema = z
   .object({
-    scheduledAt: z
-      .string()
-      .datetime({
-        message: "Invalid date-time format. Must be a valid ISO 8601 string.",
-      }),
-    phone: phoneSchema,
+    scheduledAt: z.string().datetime({
+      message: "Invalid date-time format. Must be a valid ISO 8601 string.",
+    }),
+    phone: phoneSchema.optional(),
     reason: z.string().optional(),
   })
   .refine(
@@ -140,7 +137,6 @@ const BookCallAppointmentSchema = z
 export type ValidationResult<T> =
   | { valid: true; fields: T }
   | { valid: false; missingFields: string[]; reason?: string };
-
 
 // Reads a value at a dot-path (e.g. "address.line1") from the raw input,
 // so we can tell "field was missing" apart from "field was invalid" without
@@ -166,7 +162,8 @@ function handleValidationError<T>(
     // "Missing" = the field genuinely wasn't provided at all (undefined,
     // null, or empty string). Anything else that failed validation
     // (wrong format, wrong type, etc.) is a reason, not a missing field.
-    const isMissing = rawValue === undefined || rawValue === null || rawValue === "";
+    const isMissing =
+      rawValue === undefined || rawValue === null || rawValue === "";
 
     if (isMissing) {
       missingFields.push(fieldPath);
@@ -194,11 +191,19 @@ function runValidator<Schema extends z.ZodTypeAny>(
 }
 
 // Individual validation action exports called by action-router.ts
-export const validateUpdateAccountHolder = (input: unknown) => runValidator(UpdateAccountHolderSchema, input);
-export const validateUpdatePreferredContactMethod = (input: unknown) => runValidator(UpdatePreferredContactMethodSchema, input);
-export const validateAddRelatedPerson = (input: unknown) => runValidator(AddRelatedPersonSchema, input);
-export const validateUpdateRelatedPerson = (input: unknown) => runValidator(UpdateRelatedPersonSchema, input);
-export const validateRemoveRelatedPerson = (input: unknown) => runValidator(RemoveRelatedPersonSchema, input);
-export const validateCreatePromiseToPay = (input: unknown) => runValidator(CreatePromiseToPaySchema, input);
-export const validateMockPayment = (input: unknown) => runValidator(MockPaymentSchema, input);
-export const validateBookCallAppointment = (input: unknown) => runValidator(BookCallAppointmentSchema, input);
+export const validateUpdateAccountHolder = (input: unknown) =>
+  runValidator(UpdateAccountHolderSchema, input);
+export const validateUpdatePreferredContactMethod = (input: unknown) =>
+  runValidator(UpdatePreferredContactMethodSchema, input);
+export const validateAddRelatedPerson = (input: unknown) =>
+  runValidator(AddRelatedPersonSchema, input);
+export const validateUpdateRelatedPerson = (input: unknown) =>
+  runValidator(UpdateRelatedPersonSchema, input);
+export const validateRemoveRelatedPerson = (input: unknown) =>
+  runValidator(RemoveRelatedPersonSchema, input);
+export const validateCreatePromiseToPay = (input: unknown) =>
+  runValidator(CreatePromiseToPaySchema, input);
+export const validateMockPayment = (input: unknown) =>
+  runValidator(MockPaymentSchema, input);
+export const validateBookCallAppointment = (input: unknown) =>
+  runValidator(BookCallAppointmentSchema, input);
