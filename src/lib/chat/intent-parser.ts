@@ -92,7 +92,12 @@ listed are ignored even if present in "fields".
   resolved from relative phrases using CURRENT DATE AND TIME above).
   Optional: phone (only include if the user explicitly states a phone
   number for this call — do NOT ask for it or treat it as missing; the
-  system will fall back to the phone number already on file), reason.
+  system will fall back to the phone number already on file), reason
+  (extract the topic/purpose of the call whenever the user mentions one,
+  e.g. "about my bill" → reason: "my bill", "regarding the missed payment"
+  → reason: "the missed payment"; omit only if the user gives no topic
+  at all — do not leave it out just because it wasn't phrased as a
+  standalone field).
 - read_call_appointments — no fields.
 
 ===== ROUTING LOGIC =====
@@ -150,6 +155,45 @@ User: "Can I book a call?"
 Assistant: "Could you tell me: what date/time, and what phone number?"
 User: "Next Tuesday at 10am, +353871234567"
 → {"action": "book_call_appointment", "fields": {"scheduledAt": "2026-07-21T10:00:00.000Z", "phone": "+353871234567"}, "missingFields": []}`;
+}
+
+const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+const PHONE_REGEX = /\+[0-9]{10,15}/;
+
+function applyDeterministicFallback(
+  rawMessage: string,
+  parsedIntent: ParsedIntent,
+): ParsedIntent {
+  const targetActions = [
+    "add_related_person",
+    "update_related_person",
+    "update_account_holder",
+  ];
+
+  if (!targetActions.includes(parsedIntent.action)) {
+    return parsedIntent;
+  }
+
+  const finalizedIntent: ParsedIntent = {
+    ...parsedIntent,
+    fields: { ...parsedIntent.fields },
+  };
+
+  if (!finalizedIntent.fields.email) {
+    const emailMatch = rawMessage.match(EMAIL_REGEX);
+    if (emailMatch) {
+      finalizedIntent.fields.email = emailMatch[0];
+    }
+  }
+
+  if (!finalizedIntent.fields.phone) {
+    const phoneMatch = rawMessage.match(PHONE_REGEX);
+    if (phoneMatch) {
+      finalizedIntent.fields.phone = phoneMatch[0];
+    }
+  }
+
+  return finalizedIntent;
 }
 
 export async function parseIntent(
@@ -266,12 +310,13 @@ export async function parseIntent(
         const cleanJson = responseText.replace(/```json\n?|\n?```/g, "").trim();
         const rawParsed = JSON.parse(cleanJson);
         const validated = requestSchema.parse(rawParsed);
-
-        return {
+        const parsedIntent: ParsedIntent = {
           action: validated.action as ChatAction,
           fields: validated.fields,
           missingFields: validated.missingFields,
         };
+
+        return applyDeterministicFallback(message, parsedIntent);
       } finally {
         clearTimeout(timeoutId);
       }

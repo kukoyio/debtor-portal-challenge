@@ -159,9 +159,6 @@ function handleValidationError<T>(
     const fieldPath = issue.path.join(".") || "payload";
     const rawValue = getValueAtPath(input, issue.path);
 
-    // "Missing" = the field genuinely wasn't provided at all (undefined,
-    // null, or empty string). Anything else that failed validation
-    // (wrong format, wrong type, etc.) is a reason, not a missing field.
     const isMissing =
       rawValue === undefined || rawValue === null || rawValue === "";
 
