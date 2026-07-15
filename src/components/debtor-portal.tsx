@@ -30,6 +30,7 @@ import {
 } from "@/lib/account/types";
 import type { ChatResponse } from "@/lib/chat/types";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 type PortalProps = {
   fixture: LegacyAccountFixture;
@@ -104,6 +105,8 @@ export function DebtorPortal({ fixture }: PortalProps) {
   const accountContext = normalizeLegacyFixture(fixture);
   const fullName = `${accountContext.account.accountHolderFirstName} ${accountContext.account.accountHolderLastName}`;
 
+  const router = useRouter();
+
   const handleSendMessage = async () => {
     const nextMessage = draft.trim();
 
@@ -151,6 +154,9 @@ export function DebtorPortal({ fixture }: PortalProps) {
           content: assistantReply,
         },
       ]);
+      if ("result" in body && (body as ChatResponse).result.success) {
+        router.refresh(); // Next.js App Router: re-runs the server component's data fetch
+      }
     } catch {
       setMessages((currentMessages) => [
         ...currentMessages,

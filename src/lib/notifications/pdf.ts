@@ -1,5 +1,5 @@
 import { AccountContext } from "../account/types";
-import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit/js/pdfkit.standalone";
 
 /**
  * Formats integer cents as a currency string, e.g. 128500 -> "1,285.00 EUR"

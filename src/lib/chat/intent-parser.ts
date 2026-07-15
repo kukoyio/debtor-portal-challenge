@@ -73,7 +73,9 @@ listed are ignored even if present in "fields".
 - read_preferred_contact_method — no fields.
 - update_preferred_contact_method — required: contactMethod
   (one of "email" | "sms" | "phone").
-- add_related_person — required: name, email, phone. Optional: relationship,
+- add_related_person — required: name, email, phone — ALL THREE must be
+  extracted if present in the message; do not omit email even if name and
+  phone are also present. Optional: relationship,
   authorizedToAct (boolean — true only if the user explicitly says this
   person can act/speak on their behalf; default false if unstated).
 - update_related_person — required: personName (identifies who to update),
@@ -124,7 +126,10 @@ User: "What's the weather like today?"
 → {"action": "unsupported", "fields": {}, "missingFields": []}
 
 User: "Change Mark's phone number to +353831112233."
-→ {"action": "update_related_person", "fields": {"personName": "Mark", "phone": "+353831112233"}, "missingFields": []}`;
+→ {"action": "update_related_person", "fields": {"personName": "Mark", "phone": "+353831112233"}, "missingFields": []}
+
+User: "Add Mark Murphy, mark@example.test, +353831998877 so he can act for me."
+→ {"action": "add_related_person", "fields": {"name": "Mark Murphy", "email": "mark@example.test", "phone": "+353831998877", "authorizedToAct": true}, "missingFields": []}`;
 }
 
 export async function parseIntent(
@@ -154,95 +159,105 @@ export async function parseIntent(
         ...historyParts,
         { role: "user", parts: [{ text: message }] },
       ];
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s to timeout, prevent long delays
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: conversationContents,
-        config: {
-          systemInstruction: buildSystemPrompt(currentDateIso),
-          temperature: 0.1, // Low temperature forces deterministic JSON routing
-          maxOutputTokens: 2048,
-          thinkingConfig: {
-            thinkingBudget: 0,
-          },
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              action: {
-                type: "STRING",
-                enum: [
-                  "read_account",
-                  "update_account_holder",
-                  "read_preferred_contact_method",
-                  "update_preferred_contact_method",
-                  "add_related_person",
-                  "update_related_person",
-                  "remove_related_person",
-                  "read_related_people",
-                  "create_promise_to_pay",
-                  "read_promises_to_pay",
-                  "mock_payment",
-                  "read_transactions",
-                  "book_call_appointment",
-                  "read_call_appointments",
-                  "clarify",
-                  "unsupported",
-                ],
-              },
-              fields: {
-                type: "OBJECT",
-                properties: {
-                  firstName: { type: "STRING" },
-                  lastName: { type: "STRING" },
-                  email: { type: "STRING" },
-                  phone: { type: "STRING" },
-                  address: {
-                    type: "OBJECT",
-                    properties: {
-                      line1: { type: "STRING" },
-                      line2: { type: "STRING" },
-                      city: { type: "STRING" },
-                      postalCode: { type: "STRING" },
-                      country: { type: "STRING" },
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-3.5-flash", // gemini-3.5-flash or gemini-3.1-flash-lite
+          contents: conversationContents,
+          config: {
+            systemInstruction: buildSystemPrompt(currentDateIso),
+            temperature: 0.3, 
+            maxOutputTokens: 2048,
+            thinkingConfig: {
+              thinkingBudget: 0,
+            },
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                action: {
+                  type: "STRING",
+                  enum: [
+                    "read_account",
+                    "update_account_holder",
+                    "read_preferred_contact_method",
+                    "update_preferred_contact_method",
+                    "add_related_person",
+                    "update_related_person",
+                    "remove_related_person",
+                    "read_related_people",
+                    "create_promise_to_pay",
+                    "read_promises_to_pay",
+                    "mock_payment",
+                    "read_transactions",
+                    "book_call_appointment",
+                    "read_call_appointments",
+                    "clarify",
+                    "unsupported",
+                  ],
+                },
+                fields: {
+                  type: "OBJECT",
+                  properties: {
+                    firstName: { type: "STRING" },
+                    lastName: { type: "STRING" },
+                    email: { type: "STRING" },
+                    phone: { type: "STRING" },
+                    address: {
+                      type: "OBJECT",
+                      properties: {
+                        line1: { type: "STRING" },
+                        line2: { type: "STRING" },
+                        city: { type: "STRING" },
+                        postalCode: { type: "STRING" },
+                        country: { type: "STRING" },
+                      },
                     },
+                    contactMethod: {
+                      type: "STRING",
+                      enum: ["email", "sms", "phone"],
+                    },
+                    name: { type: "STRING" },
+                    personName: { type: "STRING" },
+                    relationship: { type: "STRING" },
+                    authorizedToAct: { type: "BOOLEAN" },
+                    amountCents: { type: "INTEGER" },
+                    dueDate: { type: "STRING" },
+                    scheduledAt: { type: "STRING" },
+                    reason: { type: "STRING" },
                   },
-                  contactMethod: {
-                    type: "STRING",
-                    enum: ["email", "sms", "phone"],
-                  },
-                  name: { type: "STRING" },
-                  personName: { type: "STRING" },
-                  relationship: { type: "STRING" },
-                  authorizedToAct: { type: "BOOLEAN" },
-                  amountCents: { type: "INTEGER" },
-                  dueDate: { type: "STRING" },
-                  scheduledAt: { type: "STRING" },
-                  reason: { type: "STRING" },
+                },
+                missingFields: {
+                  type: "ARRAY",
+                  items: { type: "STRING" },
                 },
               },
-              missingFields: {
-                type: "ARRAY",
-                items: { type: "STRING" },
-              },
+              required: ["action", "fields", "missingFields"],
             },
-            required: ["action", "fields", "missingFields"],
+            abortSignal: controller.signal,
           },
-        },
-      });
+        });
 
-      const responseText = response.text;
-      if (!responseText) return fallback;
+        const responseText = response.text;
+        if (!responseText) return fallback;
 
-      const cleanJson = responseText.replace(/```json\n?|\n?```/g, "").trim();
-      const rawParsed = JSON.parse(cleanJson);
-      const validated = requestSchema.parse(rawParsed);
+        console.log("[parseIntent] RAW response text:", responseText); // temporary
 
-      return {
-        action: validated.action as ChatAction,
-        fields: validated.fields,
-        missingFields: validated.missingFields,
-      };
+        const cleanJson = responseText.replace(/```json\n?|\n?```/g, "").trim();
+        const rawParsed = JSON.parse(cleanJson);
+        const validated = requestSchema.parse(rawParsed);
+        console.log("[parseIntent] raw fields from model:", JSON.stringify(validated.fields));
+
+        return {
+          action: validated.action as ChatAction,
+          fields: validated.fields,
+          missingFields: validated.missingFields,
+        };
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (error) {
       console.error(
         `[IntentParser Error]: Attempt ${attempt + 1} failed.`,
@@ -252,5 +267,6 @@ export async function parseIntent(
       await new Promise((resolve) => setTimeout(resolve, 400)); // pause before retry help with 503 errors
     }
   }
+
   return fallback;
 }
